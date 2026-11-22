@@ -205,12 +205,22 @@ rule Decl_inst/functionDeclarationIR:
 ;;; syntax actionDeclarationIR =
 ;;;   annotationList ACTION nameIR `( parameterListIR ) blockStatementIR
 
+dec $controlPlaneName_of_action(objectId, annotationList, nameIR) : nameIR
+
+def $controlPlaneName_of_action(objectId, annotationList, nameIR)
+  = $join_text($qualify_objectId(objectId, nameIR_local), ".")
+  -- if nameIR_local = $name_annotation_default(annotationList, nameIR)
+
 rule ActionDecl_inst:
   p IC_0 |- annotationList ACTION nameIR `( parameterListIR `) blockStatementIR
           : IC_1
+  ---- ;; determine the control-plane name, using name annotation if exists
+  -- if nameIR_controlPlane
+      = $controlPlaneName_of_action(IC_0.PATH, annotationList, nameIR)
   ---- ;; bind action definition to callable environment
   -- if callableId = $callableId_IR(nameIR, parameterListIR)
-  -- if actionDef = annotationList ACTION nameIR `( parameterListIR `) blockStatementIR
+  -- if actionDef
+      = annotationList ACTION nameIR nameIR_controlPlane `( parameterListIR `) blockStatementIR
   -- if IC_1 = $add_callableDef_non_overload_i(p, IC_0, callableId, actionDef)
 
 rule Decl_inst/actionDeclarationIR:

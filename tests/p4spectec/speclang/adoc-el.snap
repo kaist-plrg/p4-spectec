@@ -20303,7 +20303,7 @@ syntax stateEnv, actionDefEnv, frame, tableObjectProperty
 
 
 actionDef
-    : annotationList ACTION nameIR ( parameterListIR ) blockStatementIR
+    : annotationList ACTION nameIR nameIR ( parameterListIR ) blockStatementIR
     ;
 
 
@@ -20365,7 +20365,7 @@ dec $parameterListIR_of_callableDef(callableDef) : parameterIR*
 dec $parameterListIR_of_actionDef(actionDef) : parameterIR*
 
 def $parameterListIR_of_actionDef(
-    annotationList ACTION _ `( parameterListIR `) _)
+    annotationList ACTION _ _ `( parameterListIR `) _)
   = parameterListIR
 
 def $parameterListIR_of_callableDef(actionDef)
@@ -21178,10 +21178,10 @@ relation TableActions_inst:
   instContext store |- tableActionIR* : store tableActionIR*
 
 relation TableProperty_inst:
-  objectId instContext store |- tablePropertyIR : store tablePropertyIR
+  instContext store |- tablePropertyIR : store tablePropertyIR
 
 relation TableProperties_inst:
-  objectId instContext store |- tablePropertyIR* : store tablePropertyIR*
+  instContext store |- tablePropertyIR* : store tablePropertyIR*
 
 relation ControlLocalDecl_inst:
   instContext store
@@ -22156,13 +22156,22 @@ rule Decl_inst/functionDeclarationIR:
 
 
 
+dec $controlPlaneName_of_action(objectId, annotationList, nameIR) : nameIR
+
+def $controlPlaneName_of_action(objectId, annotationList, nameIR)
+  = $join_text($qualify_objectId(objectId, nameIR_local), ".")
+  -- if nameIR_local = $name_annotation_default(annotationList, nameIR)
+
 rule ActionDecl_inst:
   p IC_0
       |- annotationList ACTION nameIR `( parameterListIR `) blockStatementIR
           : IC_1
+  -- if nameIR_controlPlane
+      = $controlPlaneName_of_action(IC_0.PATH, annotationList, nameIR)
   -- if callableId = $callableId_IR(nameIR, parameterListIR)
   -- if actionDef
-      = annotationList ACTION nameIR `( parameterListIR `) blockStatementIR
+      = annotationList ACTION nameIR nameIR_controlPlane `( parameterListIR `)
+      blockStatementIR
   -- if IC_1 = $add_callableDef_non_overload_i(p, IC_0, callableId, actionDef)
 
 rule Decl_inst/actionDeclarationIR:
@@ -22867,70 +22876,20 @@ rulegroup ParserLocalDecls_inst {
 
 }
 
-rulegroup TableAction_inst {
-
-  rule TableAction_inst/name-annotation-dot-prefix:
-    IC STO
-        |- annotationList tableActionReferenceIR '#'
-        `( parameterListIR ',' parameterListIR_control `) ';'
-            : STO tableActionIR
-    -- if tableActionReferenceIR = prefixedNameIR _ `( argumentListIR `)
-    -- if (cursor, _, actionDef)
-        = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
-    -- if annotationList_actionDef ACTION nameIR `( _ `) _ = actionDef
-    -- if nameIR_anno = $name_annotation(annotationList_actionDef)
-    -- if $starts_with(nameIR_anno, ".")
-    -- if controlPlaneNameIR = $strip_prefix(nameIR_anno, ".")
-    -- if tableActionReferenceIR'
-        = prefixedNameIR controlPlaneNameIR `( argumentListIR `)
-    -- if tableActionIR
-        = annotationList tableActionReferenceIR' '#'
-        `( parameterListIR ',' parameterListIR_control `) ';'
-
-  rule TableAction_inst/name-annotation:
-    IC STO
-        |- annotationList tableActionReferenceIR '#'
-        `( parameterListIR ',' parameterListIR_control `) ';'
-            : STO tableActionIR
-    -- if tableActionReferenceIR = prefixedNameIR _ `( argumentListIR `)
-    -- if (cursor, _, actionDef)
-        = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
-    -- if annotationList_actionDef ACTION nameIR `( _ `) _ = actionDef
-    -- if nameIR_anno = $name_annotation(annotationList_actionDef)
-    -- if ~$starts_with(nameIR_anno, ".")
-    -- if controlPlaneNameIR
-        = $ite<controlPlaneNameIR>(
-            cursor = GLOBAL,
-            nameIR_anno,
-            $join_text(IC.PATH ++ nameIR_anno, "."))
-    -- if tableActionReferenceIR'
-        = prefixedNameIR controlPlaneNameIR `( argumentListIR `)
-    -- if tableActionIR
-        = annotationList tableActionReferenceIR' '#'
-        `( parameterListIR ',' parameterListIR_control `) ';'
-
-  rule TableAction_inst/no-name-annotation:
-    IC STO
-        |- annotationList tableActionReferenceIR '#'
-        `( parameterListIR ',' parameterListIR_control `) ';'
-            : STO tableActionIR
-    -- if tableActionReferenceIR = prefixedNameIR _ `( argumentListIR `)
-    -- if (cursor, _, actionDef)
-        = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
-    -- if annotationList_actionDef ACTION nameIR `( _ `) _ = actionDef
-    -- if eps = $name_annotation(annotationList_actionDef)
-    -- if controlPlaneNameIR
-        = $ite<controlPlaneNameIR>(
-            cursor = GLOBAL,
-            nameIR,
-            $join_text(IC.PATH ++ nameIR, "."))
-    -- if tableActionReferenceIR'
-        = prefixedNameIR controlPlaneNameIR `( argumentListIR `)
-    -- if tableActionIR
-        = annotationList tableActionReferenceIR' '#'
-        `( parameterListIR ',' parameterListIR_control `) ';'
-
-}
+rule TableAction_inst:
+  IC STO
+      |- annotationList tableActionReferenceIR '#'
+      `( parameterListIR ',' parameterListIR_control `) ';'
+          : STO tableActionIR
+  -- if tableActionReferenceIR = prefixedNameIR _ `( argumentListIR `)
+  -- if (_, _, actionDef)
+      = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
+  -- if _ ACTION _ nameIR_controlPlane `( _ `) _ = actionDef
+  -- if tableActionReferenceIR'
+      = prefixedNameIR nameIR_controlPlane `( argumentListIR `)
+  -- if tableActionIR
+      = annotationList tableActionReferenceIR' '#'
+      `( parameterListIR ',' parameterListIR_control `) ';'
 
 
 
@@ -22957,15 +22916,14 @@ rulegroup TableActions_inst {
 
 
 rule TableProperty_inst/tableKeysPropertyIR:
-  objectId IC STO |- tableKeysPropertyIR : STO tableKeysPropertyIR
+  IC STO |- tableKeysPropertyIR : STO tableKeysPropertyIR
 
 
 
 
 
 rule TableProperty_inst/tableActionsPropertyIR:
-  objectId IC STO_0
-      |- ACTIONS '=' `{ tableActionListIR `} : STO_1 tableActionsPropertyIR
+  IC STO_0 |- ACTIONS '=' `{ tableActionListIR `} : STO_1 tableActionsPropertyIR
   -- TableActions_inst:
       IC STO_0 |- tableActionListIR : STO_1 tableActionListIR_inst
   -- if tableActionsPropertyIR = ACTIONS '=' `{ tableActionListIR_inst `}
@@ -22975,15 +22933,14 @@ rule TableProperty_inst/tableActionsPropertyIR:
 
 
 rule TableProperty_inst/tableDefaultActionPropertyIR:
-  objectId IC STO
-      |- tableDefaultActionPropertyIR : STO tableDefaultActionPropertyIR
+  IC STO |- tableDefaultActionPropertyIR : STO tableDefaultActionPropertyIR
 
 
 
 
 
 rule TableProperty_inst/tableEntriesPropertyIR:
-  objectId IC STO |- tableEntriesPropertyIR : STO tableEntriesPropertyIR
+  IC STO |- tableEntriesPropertyIR : STO tableEntriesPropertyIR
 
 
 
@@ -22992,16 +22949,16 @@ rule TableProperty_inst/tableEntriesPropertyIR:
 rulegroup TableProperty_inst/tableCustomPropertyIR {
 
   rule TableProperty_inst/custom:
-    objectId IC STO_0
+    IC STO_0
         |- annotationList constOptIR CUSTOM nameIR ('=' typedExpressionIR) ';'
             : STO_1 tableCustomPropertyIR_inst
-    -- if IC_inner = IC[PATH = objectId ++ nameIR]
+    -- if IC_inner = $enter_path_i(IC, nameIR)
     -- Expr_inst: LOCAL IC_inner STO_0 |- typedExpressionIR : STO_1 value
     -- if tableCustomPropertyIR_inst
         = annotationList constOptIR CUSTOM_CONST nameIR ('=' _VALUE value) ';'
 
   rule TableProperty_inst/custom-const:
-    objectId IC STO
+    IC STO
         |- annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR
         ';'
             : STO tableCustomPropertyIR_inst
@@ -23018,16 +22975,16 @@ rulegroup TableProperty_inst/tableCustomPropertyIR {
 rulegroup TableProperties_inst {
 
   rule TableProperties_inst/nil:
-    objectId IC STO |- eps : STO eps
+    IC STO |- eps : STO eps
 
   rule TableProperties_inst/cons:
-    objectId IC STO_0
+    IC STO_0
         |- tablePropertyIR_h :: tablePropertyIR_t*
             : STO_2 (tablePropertyIR_h_inst :: tablePropertyIR_t_inst*)
     -- TableProperty_inst:
-        objectId IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
+        IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
     -- TableProperties_inst:
-        objectId IC STO_1 |- tablePropertyIR_t* : STO_2 tablePropertyIR_t_inst*
+        IC STO_1 |- tablePropertyIR_t* : STO_2 tablePropertyIR_t_inst*
 
 }
 
@@ -23141,10 +23098,10 @@ rule ControlLocalDecl_inst/tableDeclarationIR:
           : IC_1 STO_2 constantDeclarationIR
   -- if objectId = $objectId_of_table(IC_0.PATH, annotationList, nameIR)
   -- if IC_callee_0 = $inherit_i(BLOCK, IC_0)
-  -- if IC_frame = $enter_i(IC_callee_0)
+  -- if IC_callee_1 = IC_callee_0[PATH = objectId]
+  -- if IC_frame = $enter_i(IC_callee_1)
   -- TableProperties_inst:
-      objectId IC_frame STO_0
-          |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
+      IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
   -- if TBL = $init_table(tablePropertyListIR_inst)
   -- if frame :: _ = IC_frame.LOCAL.FRAMES
   -- if object_table = TABLE nameIR `{ frame TBL `}
@@ -27391,7 +27348,7 @@ rule Callee_eval/actionCallee:
           EC,
           referenceExpressionIR,
           argumentListIR)
-  -- if _ ACTION nameIR `( parameterListIR `) blockStatementIR = actionDef
+  -- if _ ACTION nameIR _ `( parameterListIR `) blockStatementIR = actionDef
   -- if actionCallee
       = ACTION p_ref '.' nameIR `( parameterListIR '#' id_default* `)
       blockStatementIR

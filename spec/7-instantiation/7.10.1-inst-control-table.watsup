@@ -4,74 +4,20 @@
 ;; syntax tableActionIR
 ;;
 
-rulegroup TableAction_inst {
-
-  rule TableAction_inst/name-annotation-dot-prefix:
-    IC STO |- annotationList tableActionReferenceIR
-              '#' `( parameterListIR ',' parameterListIR_control `) ';'
-            : STO tableActionIR
-    -- if tableActionReferenceIR
-        = prefixedNameIR _ `( argumentListIR `)
-    -- if (cursor, _, actionDef)
-        = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
-    -- if annotationList_actionDef ACTION nameIR `( _ `) _
-        = actionDef
-    -- if nameIR_anno = $name_annotation(annotationList_actionDef)
-    ---- ;; if name annotation has dot prefix, use a standalone name
-    -- if $starts_with(nameIR_anno, ".")
-    -- if controlPlaneNameIR = $strip_prefix(nameIR_anno, ".")
-    -- if tableActionReferenceIR'
-        = prefixedNameIR controlPlaneNameIR `( argumentListIR `)
-    -- if tableActionIR = annotationList tableActionReferenceIR'
-          '#' `( parameterListIR ',' parameterListIR_control `) ';'
-
-  rule TableAction_inst/name-annotation:
-    IC STO |- annotationList tableActionReferenceIR
-              '#' `( parameterListIR ',' parameterListIR_control `) ';'
-            : STO tableActionIR
-    -- if tableActionReferenceIR
-        = prefixedNameIR _ `( argumentListIR `)
-    -- if (cursor, _, actionDef)
-        = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
-    -- if annotationList_actionDef ACTION nameIR `( _ `) _
-        = actionDef
-    -- if nameIR_anno = $name_annotation(annotationList_actionDef)
-    -- if ~$starts_with(nameIR_anno, ".")
-    -- if controlPlaneNameIR
-        = $ite<controlPlaneNameIR>(
-            cursor = GLOBAL,
-            nameIR_anno,
-            $join_text(IC.PATH ++ nameIR_anno, ".")
-          )
-    -- if tableActionReferenceIR'
-        = prefixedNameIR controlPlaneNameIR `( argumentListIR `)
-    -- if tableActionIR = annotationList tableActionReferenceIR'
-          '#' `( parameterListIR ',' parameterListIR_control `) ';'
-
-  rule TableAction_inst/no-name-annotation:
-    IC STO |- annotationList tableActionReferenceIR
-              '#' `( parameterListIR ',' parameterListIR_control `) ';'
-            : STO tableActionIR
-    -- if tableActionReferenceIR
-        = prefixedNameIR _ `( argumentListIR `)
-    -- if (cursor, _, actionDef)
-        = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
-    -- if annotationList_actionDef ACTION nameIR `( _ `) _
-        = actionDef
-    ---- ;; todo
-    -- if eps = $name_annotation(annotationList_actionDef)
-    -- if controlPlaneNameIR
-        = $ite<controlPlaneNameIR>(
-            cursor = GLOBAL,
-            nameIR,
-            $join_text(IC.PATH ++ nameIR, ".")
-          )
-    -- if tableActionReferenceIR'
-        = prefixedNameIR controlPlaneNameIR `( argumentListIR `)
-    -- if tableActionIR = annotationList tableActionReferenceIR'
-          '#' `( parameterListIR ',' parameterListIR_control `) ';'
-
-}
+rule TableAction_inst:
+  IC STO |- annotationList tableActionReferenceIR
+            '#' `( parameterListIR ',' parameterListIR_control `) ';'
+          : STO tableActionIR
+  -- if tableActionReferenceIR
+      = prefixedNameIR _ `( argumentListIR `)
+  ---- ;; take the control-plane name from the action definition
+  -- if (_, _, actionDef)
+      = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
+  -- if _ ACTION _ nameIR_controlPlane `( _ `) _ = actionDef
+  -- if tableActionReferenceIR'
+      = prefixedNameIR nameIR_controlPlane `( argumentListIR `)
+  -- if tableActionIR = annotationList tableActionReferenceIR'
+        '#' `( parameterListIR ',' parameterListIR_control `) ';'
 
 ;;
 ;; Table actions instantiation
@@ -103,13 +49,13 @@ rulegroup TableActions_inst {
 ;;; KEY `= `{ tableKeyListIR }
 
 rule TableProperty_inst/tableKeysPropertyIR:
-  objectId IC STO |- tableKeysPropertyIR : STO tableKeysPropertyIR
+  IC STO |- tableKeysPropertyIR : STO tableKeysPropertyIR
 
 ;;; ACTIONS `= `{ tableActionListIR }
 
 rule TableProperty_inst/tableActionsPropertyIR:
-  objectId IC STO_0 |- ACTIONS '=' `{ tableActionListIR `}
-                   : STO_1 tableActionsPropertyIR
+  IC STO_0 |- ACTIONS '=' `{ tableActionListIR `}
+          : STO_1 tableActionsPropertyIR
   -- TableActions_inst:
       IC STO_0 |- tableActionListIR : STO_1 tableActionListIR_inst
   -- if tableActionsPropertyIR = ACTIONS '=' `{ tableActionListIR_inst `}
@@ -117,12 +63,12 @@ rule TableProperty_inst/tableActionsPropertyIR:
 ;;; annotationList constOptIR DEFAULT_ACTION `= tableActionReferenceIR `;
 
 rule TableProperty_inst/tableDefaultActionPropertyIR:
-  objectId IC STO |- tableDefaultActionPropertyIR : STO tableDefaultActionPropertyIR
+  IC STO |- tableDefaultActionPropertyIR : STO tableDefaultActionPropertyIR
 
 ;;; annotationList constOptIR ENTRIES `= `{ tableEntryListIR }
 
 rule TableProperty_inst/tableEntriesPropertyIR:
-  objectId IC STO |- tableEntriesPropertyIR : STO tableEntriesPropertyIR
+  IC STO |- tableEntriesPropertyIR : STO tableEntriesPropertyIR
 
 ;;; annotationList constOptIR CUSTOM nameIR initializerIR `;
 ;;; annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;
@@ -130,17 +76,17 @@ rule TableProperty_inst/tableEntriesPropertyIR:
 rulegroup TableProperty_inst/tableCustomPropertyIR {
 
   rule TableProperty_inst/custom:
-    objectId IC STO_0 |- annotationList constOptIR CUSTOM nameIR ('=' typedExpressionIR) ';'
-                       : STO_1 tableCustomPropertyIR_inst
-    ---- ;; instantiate expression under the table object and replace custom property with evaluated result
-    -- if IC_inner = IC[ .PATH = objectId ++ nameIR ]
+    IC STO_0 |- annotationList constOptIR CUSTOM nameIR ('=' typedExpressionIR) ';'
+              : STO_1 tableCustomPropertyIR_inst
+    ---- ;; instantiate expression and replace custom property with evaluated result
+    -- if IC_inner = $enter_path_i(IC, nameIR)
     -- Expr_inst: LOCAL IC_inner STO_0 |- typedExpressionIR : STO_1 value
     -- if tableCustomPropertyIR_inst
         = annotationList constOptIR CUSTOM_CONST nameIR ('=' _VALUE value) ';'
 
   rule TableProperty_inst/custom-const:
-    objectId IC STO |- annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';'
-                     : STO tableCustomPropertyIR_inst
+    IC STO |- annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';'
+            : STO tableCustomPropertyIR_inst
     -- if tableCustomPropertyIR_inst
         = annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';'
 
@@ -155,15 +101,15 @@ rulegroup TableProperty_inst/tableCustomPropertyIR {
 rulegroup TableProperties_inst {
 
   rule TableProperties_inst/nil:
-    objectId IC STO |- eps : STO eps
+    IC STO |- eps : STO eps
 
   rule TableProperties_inst/cons:
-    objectId IC STO_0 |- tablePropertyIR_h :: tablePropertyIR_t*
-                       : STO_2 (tablePropertyIR_h_inst :: tablePropertyIR_t_inst*)
+    IC STO_0 |- tablePropertyIR_h :: tablePropertyIR_t*
+              : STO_2 (tablePropertyIR_h_inst :: tablePropertyIR_t_inst*)
     -- TableProperty_inst:
-        objectId IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
+        IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
     -- TableProperties_inst:
-        objectId IC STO_1 |- tablePropertyIR_t* : STO_2 tablePropertyIR_t_inst*
+        IC STO_1 |- tablePropertyIR_t* : STO_2 tablePropertyIR_t_inst*
 
 }
 

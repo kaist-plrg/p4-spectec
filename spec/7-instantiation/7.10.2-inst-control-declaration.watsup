@@ -46,12 +46,13 @@ rule ControlLocalDecl_inst/tableDeclarationIR:
   -- if objectId = $objectId_of_table(IC_0.PATH, annotationList, nameIR)
   ---- ;; initialize callee context
   -- if IC_callee_0 = $inherit_i(BLOCK, IC_0)
-  ---- ;; create table frame
-  -- if IC_frame = $enter_i(IC_callee_0)
+  ---- ;; create table frame at the table's object id
+  -- if IC_callee_1 = IC_callee_0[ .PATH = objectId ]
+  -- if IC_frame = $enter_i(IC_callee_1)
   ---- ;; insantiate table properties
   -- TableProperties_inst:
-      objectId IC_frame STO_0 |- tablePropertyListIR
-                               : STO_1 tablePropertyListIR_inst
+      IC_frame STO_0 |- tablePropertyListIR
+                      : STO_1 tablePropertyListIR_inst
   -- if TBL = $init_table(tablePropertyListIR_inst)
   ---- ;; create table object with table frame
   -- if frame :: _ = IC_frame.LOCAL.FRAMES

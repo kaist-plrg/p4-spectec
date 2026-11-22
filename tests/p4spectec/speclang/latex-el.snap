@@ -29373,7 +29373,7 @@ source: test-driver/tests/speclang.rs
 
 
 \begin{aligned}
-\mathsf{actionDef} & \mathrel{::=} & \mathsf{annotationList}\,\mathsf{ACTION}\,\mathsf{nameIR}\,\left(\mathsf{parameterListIR}\right)\,\mathsf{blockStatementIR}
+\mathsf{actionDef} & \mathrel{::=} & \mathsf{annotationList}\,\mathsf{ACTION}\,\mathsf{nameIR}\,\mathsf{nameIR}\,\left(\mathsf{parameterListIR}\right)\,\mathsf{blockStatementIR}
 \end{aligned}
 
 
@@ -29430,7 +29430,7 @@ source: test-driver/tests/speclang.rs
 \mathrm{parameterListIR\_of\_actionDef}\left(\mathsf{actionDef}\right) : {\mathsf{parameterIR}}^{\ast}
 
 \begin{aligned}
-\mathrm{parameterListIR\_of\_actionDef}\left(\mathsf{annotationList}\,\mathsf{ACTION}\,\mathsf{\_}\,\left(\mathsf{parameterListIR}\right)\,\mathsf{\_}\right) & = & \mathsf{parameterListIR}
+\mathrm{parameterListIR\_of\_actionDef}\left(\mathsf{annotationList}\,\mathsf{ACTION}\,\mathsf{\_}\,\mathsf{\_}\,\left(\mathsf{parameterListIR}\right)\,\mathsf{\_}\right) & = & \mathsf{parameterListIR}
 \end{aligned}
 
 \begin{aligned}
@@ -30606,9 +30606,9 @@ source: test-driver/tests/speclang.rs
 
 \mathrm{TableActions\_inst} : \mathsf{instContext}\,\mathsf{store} \mathrel{\vdash} {\mathsf{tableActionIR}}^{\ast} : \mathsf{store}\,{\mathsf{tableActionIR}}^{\ast}
 
-\mathrm{TableProperty\_inst} : \mathsf{objectId}\,\mathsf{instContext}\,\mathsf{store} \mathrel{\vdash} \mathsf{tablePropertyIR} : \mathsf{store}\,\mathsf{tablePropertyIR}
+\mathrm{TableProperty\_inst} : \mathsf{instContext}\,\mathsf{store} \mathrel{\vdash} \mathsf{tablePropertyIR} : \mathsf{store}\,\mathsf{tablePropertyIR}
 
-\mathrm{TableProperties\_inst} : \mathsf{objectId}\,\mathsf{instContext}\,\mathsf{store} \mathrel{\vdash} {\mathsf{tablePropertyIR}}^{\ast} : \mathsf{store}\,{\mathsf{tablePropertyIR}}^{\ast}
+\mathrm{TableProperties\_inst} : \mathsf{instContext}\,\mathsf{store} \mathrel{\vdash} {\mathsf{tablePropertyIR}}^{\ast} : \mathsf{store}\,{\mathsf{tablePropertyIR}}^{\ast}
 
 \mathrm{ControlLocalDecl\_inst} : \mathsf{instContext}\,\mathsf{store} \mathrel{\vdash} \mathsf{controlLocalDeclarationIR} : \mathsf{instContext}\,\mathsf{store}\,{\mathsf{controlLocalDeclarationIR}}^{?}
 
@@ -31621,13 +31621,31 @@ source: test-driver/tests/speclang.rs
 
 
 
+\mathrm{controlPlaneName\_of\_action}\left(\mathsf{objectId}, \mathsf{annotationList}, \mathsf{nameIR}\right) : \mathsf{nameIR}
+
+\mathrlap{\displaystyle \begin{array}{rcl}
+\mathrm{controlPlaneName\_of\_action}\left(\mathsf{objectId}, \mathsf{annotationList}, \mathsf{nameIR}\right) & = & \mathrm{join\_text}\left(\mathrm{qualify\_objectId}\left(\mathsf{objectId}, {\mathsf{nameIR}}_{\mathsf{local}}\right), \texttt{"."}\right) \\
+\mathrlap{\displaystyle \quad\text{if}\,{\mathsf{nameIR}}_{\mathsf{local}} = \mathrm{name\_annotation\_default}\left(\mathsf{annotationList}, \mathsf{nameIR}\right)}\smash{\hphantom{\begin{array}{r}
+\mathrm{controlPlaneName\_of\_action}\left(\mathsf{objectId}, \mathsf{annotationList}, \mathsf{nameIR}\right)
+\end{array}}} &  &
+\end{array}}\smash{\hphantom{\begin{array}{l}
+\begin{array}{rcl}
+\mathrm{controlPlaneName\_of\_action}\left(\mathsf{objectId}, \mathsf{annotationList}, \mathsf{nameIR}\right) & = & \mathrm{join\_text}\left(\mathrm{qualify\_objectId}\left(\mathsf{objectId}, {\mathsf{nameIR}}_{\mathsf{local}}\right), \texttt{"."}\right)
+\end{array} \\
+\quad\text{if}\,{\mathsf{nameIR}}_{\mathsf{local}} = \mathrm{name\_annotation\_default}\left(\mathsf{annotationList}, \mathsf{nameIR}\right)
+\end{array}}}
+
 \begin{array}{l}
 {\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{ActionDecl\_inst}}} \\
 {\displaystyle \frac{\begin{array}{r@{\quad}l}
-{\scriptstyle\mathtt{(1)}} & \mathsf{callableId} = \mathrm{callableId\_IR}\left(\mathsf{nameIR}, \mathsf{parameterListIR}\right) \\
-{\scriptstyle\mathtt{(2)}} & \mathsf{actionDef} \\
- & \quad\quad= \mathsf{annotationList}\,\mathsf{ACTION}\,\mathsf{nameIR}\,\left(\mathsf{parameterListIR}\right)\,\mathsf{blockStatementIR} \\
-{\scriptstyle\mathtt{(3)}} & {\mathsf{IC}}_{\mathsf{1}} = \mathrm{add\_callableDef\_non\_overload\_i}\left(\mathsf{p}, {\mathsf{IC}}_{\mathsf{0}}, \mathsf{callableId}, \mathsf{actionDef}\right)
+{\scriptstyle\mathtt{(1)}} & {\mathsf{nameIR}}_{\mathsf{controlPlane}} = \mathrm{controlPlaneName\_of\_action}\left({{\mathsf{IC}}_{\mathsf{0}}}_{\mathsf{PATH}}, \mathsf{annotationList}, \mathsf{nameIR}\right) \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{callableId} = \mathrm{callableId\_IR}\left(\mathsf{nameIR}, \mathsf{parameterListIR}\right) \\
+{\scriptstyle\mathtt{(3)}} & \mathsf{actionDef} \\
+ & \quad\quad= \begin{array}{l}
+\mathsf{annotationList}\,\mathsf{ACTION}\,\mathsf{nameIR}\,{\mathsf{nameIR}}_{\mathsf{controlPlane}}\,\left(\mathsf{parameterListIR}\right) \\
+\quad\quad\mathsf{blockStatementIR}
+\end{array} \\
+{\scriptstyle\mathtt{(4)}} & {\mathsf{IC}}_{\mathsf{1}} = \mathrm{add\_callableDef\_non\_overload\_i}\left(\mathsf{p}, {\mathsf{IC}}_{\mathsf{0}}, \mathsf{callableId}, \mathsf{actionDef}\right)
 \end{array}}{\mathsf{p}\,{\mathsf{IC}}_{\mathsf{0}} \mathrel{\vdash} \mathsf{annotationList}\,\mathsf{ACTION}\,\mathsf{nameIR}\,\left(\mathsf{parameterListIR}\right)\,\mathsf{blockStatementIR} : {\mathsf{IC}}_{\mathsf{1}}}}
 \end{array}
 
@@ -32420,81 +32438,15 @@ source: test-driver/tests/speclang.rs
 \end{array}
 \end{gathered}
 
-\begin{gathered}
 \begin{array}{l}
-{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{TableAction\_inst-name-annotation-dot-prefix}}} \\
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{TableAction\_inst}}} \\
 {\displaystyle \frac{\begin{array}{r@{\quad}l}
 {\scriptstyle\mathtt{(1)}} & \mathsf{tableActionReferenceIR} = \mathsf{prefixedNameIR}\,\mathsf{\_}\,\left(\mathsf{argumentListIR}\right) \\
-{\scriptstyle\mathtt{(2)}} & \left(\mathsf{cursor}, \mathsf{\_}, \mathsf{actionDef}\right) \\
+{\scriptstyle\mathtt{(2)}} & \left(\mathsf{\_}, \mathsf{\_}, \mathsf{actionDef}\right) \\
  & \quad\quad= \mathrm{find\_callableDef\_non\_overload\_i}\left(\mathsf{LOCAL}, \mathsf{IC}, \mathsf{prefixedNameIR}\right) \\
-{\scriptstyle\mathtt{(3)}} & {\mathsf{annotationList}}_{\mathsf{actionDef}}\,\mathsf{ACTION}\,\mathsf{nameIR}\,\left(\mathsf{\_}\right)\,\mathsf{\_} = \mathsf{actionDef} \\
-{\scriptstyle\mathtt{(4)}} & {\mathsf{nameIR}}_{\mathsf{anno}} = \mathrm{name\_annotation}\left({\mathsf{annotationList}}_{\mathsf{actionDef}}\right) \\
-{\scriptstyle\mathtt{(5)}} & \mathrm{starts\_with}\left({\mathsf{nameIR}}_{\mathsf{anno}}, \texttt{"."}\right) \\
-{\scriptstyle\mathtt{(6)}} & \mathsf{controlPlaneNameIR} = \mathrm{strip\_prefix}\left({\mathsf{nameIR}}_{\mathsf{anno}}, \texttt{"."}\right) \\
-{\scriptstyle\mathtt{(7)}} & \mathsf{tableActionReferenceIR'} \\
- & \quad\quad= \mathsf{prefixedNameIR}\,\mathsf{controlPlaneNameIR}\,\left(\mathsf{argumentListIR}\right) \\
-{\scriptstyle\mathtt{(8)}} & \mathsf{tableActionIR} \\
- & \quad\quad= \begin{array}{l}
-\mathsf{annotationList}\,\mathsf{tableActionReferenceIR'}\,\mathbin{\mathtt{\#}} \\
-\quad\quad\left(\mathsf{parameterListIR}\,\mathbin{\mathtt{,}}\,{\mathsf{parameterListIR}}_{\mathsf{control}}\right)\,\mathbin{\mathtt{;}}
-\end{array}
-\end{array}}{\begin{array}{l}
-\mathsf{IC}\,\mathsf{STO} \\
-\quad\quad\mathrel{\vdash} \begin{array}{l}
-\mathsf{annotationList}\,\mathsf{tableActionReferenceIR}\,\mathbin{\mathtt{\#}} \\
-\quad\quad\left(\mathsf{parameterListIR}\,\mathbin{\mathtt{,}}\,{\mathsf{parameterListIR}}_{\mathsf{control}}\right)\,\mathbin{\mathtt{;}}
-\end{array} \\
-\quad\quad\quad\quad: \mathsf{STO}\,\mathsf{tableActionIR}
-\end{array}}}
-\end{array} \\[1ex]
-\begin{array}{l}
-{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{TableAction\_inst-name-annotation}}} \\
-{\displaystyle \frac{\begin{array}{r@{\quad}l}
-{\scriptstyle\mathtt{(1)}} & \mathsf{tableActionReferenceIR} = \mathsf{prefixedNameIR}\,\mathsf{\_}\,\left(\mathsf{argumentListIR}\right) \\
-{\scriptstyle\mathtt{(2)}} & \left(\mathsf{cursor}, \mathsf{\_}, \mathsf{actionDef}\right) \\
- & \quad\quad= \mathrm{find\_callableDef\_non\_overload\_i}\left(\mathsf{LOCAL}, \mathsf{IC}, \mathsf{prefixedNameIR}\right) \\
-{\scriptstyle\mathtt{(3)}} & {\mathsf{annotationList}}_{\mathsf{actionDef}}\,\mathsf{ACTION}\,\mathsf{nameIR}\,\left(\mathsf{\_}\right)\,\mathsf{\_} = \mathsf{actionDef} \\
-{\scriptstyle\mathtt{(4)}} & {\mathsf{nameIR}}_{\mathsf{anno}} = \mathrm{name\_annotation}\left({\mathsf{annotationList}}_{\mathsf{actionDef}}\right) \\
-{\scriptstyle\mathtt{(5)}} & \neg \mathrm{starts\_with}\left({\mathsf{nameIR}}_{\mathsf{anno}}, \texttt{"."}\right) \\
-{\scriptstyle\mathtt{(6)}} & \mathsf{controlPlaneNameIR} \\
- & \quad\quad= \mathrm{ite}\left\langle\mathsf{controlPlaneNameIR}\right\rangle\left(\begin{array}{l}
-\mathsf{cursor} = \mathsf{GLOBAL}, \\
-\quad\quad{\mathsf{nameIR}}_{\mathsf{anno}}, \\
-\quad\quad\mathrm{join\_text}\left({\mathsf{IC}}_{\mathsf{PATH}} \mathbin{+\!\!+} {\mathsf{nameIR}}_{\mathsf{anno}}, \texttt{"."}\right)
-\end{array}\right) \\
-{\scriptstyle\mathtt{(7)}} & \mathsf{tableActionReferenceIR'} \\
- & \quad\quad= \mathsf{prefixedNameIR}\,\mathsf{controlPlaneNameIR}\,\left(\mathsf{argumentListIR}\right) \\
-{\scriptstyle\mathtt{(8)}} & \mathsf{tableActionIR} \\
- & \quad\quad= \begin{array}{l}
-\mathsf{annotationList}\,\mathsf{tableActionReferenceIR'}\,\mathbin{\mathtt{\#}} \\
-\quad\quad\left(\mathsf{parameterListIR}\,\mathbin{\mathtt{,}}\,{\mathsf{parameterListIR}}_{\mathsf{control}}\right)\,\mathbin{\mathtt{;}}
-\end{array}
-\end{array}}{\begin{array}{l}
-\mathsf{IC}\,\mathsf{STO} \\
-\quad\quad\mathrel{\vdash} \begin{array}{l}
-\mathsf{annotationList}\,\mathsf{tableActionReferenceIR}\,\mathbin{\mathtt{\#}} \\
-\quad\quad\left(\mathsf{parameterListIR}\,\mathbin{\mathtt{,}}\,{\mathsf{parameterListIR}}_{\mathsf{control}}\right)\,\mathbin{\mathtt{;}}
-\end{array} \\
-\quad\quad\quad\quad: \mathsf{STO}\,\mathsf{tableActionIR}
-\end{array}}}
-\end{array} \\[1ex]
-\begin{array}{l}
-{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{TableAction\_inst-no-name-annotation}}} \\
-{\displaystyle \frac{\begin{array}{r@{\quad}l}
-{\scriptstyle\mathtt{(1)}} & \mathsf{tableActionReferenceIR} = \mathsf{prefixedNameIR}\,\mathsf{\_}\,\left(\mathsf{argumentListIR}\right) \\
-{\scriptstyle\mathtt{(2)}} & \left(\mathsf{cursor}, \mathsf{\_}, \mathsf{actionDef}\right) \\
- & \quad\quad= \mathrm{find\_callableDef\_non\_overload\_i}\left(\mathsf{LOCAL}, \mathsf{IC}, \mathsf{prefixedNameIR}\right) \\
-{\scriptstyle\mathtt{(3)}} & {\mathsf{annotationList}}_{\mathsf{actionDef}}\,\mathsf{ACTION}\,\mathsf{nameIR}\,\left(\mathsf{\_}\right)\,\mathsf{\_} = \mathsf{actionDef} \\
-{\scriptstyle\mathtt{(4)}} & \epsilon = \mathrm{name\_annotation}\left({\mathsf{annotationList}}_{\mathsf{actionDef}}\right) \\
-{\scriptstyle\mathtt{(5)}} & \mathsf{controlPlaneNameIR} \\
- & \quad\quad= \mathrm{ite}\left\langle\mathsf{controlPlaneNameIR}\right\rangle\left(\begin{array}{l}
-\mathsf{cursor} = \mathsf{GLOBAL}, \\
-\quad\quad\mathsf{nameIR}, \\
-\quad\quad\mathrm{join\_text}\left({\mathsf{IC}}_{\mathsf{PATH}} \mathbin{+\!\!+} \mathsf{nameIR}, \texttt{"."}\right)
-\end{array}\right) \\
-{\scriptstyle\mathtt{(6)}} & \mathsf{tableActionReferenceIR'} \\
- & \quad\quad= \mathsf{prefixedNameIR}\,\mathsf{controlPlaneNameIR}\,\left(\mathsf{argumentListIR}\right) \\
-{\scriptstyle\mathtt{(7)}} & \mathsf{tableActionIR} \\
+{\scriptstyle\mathtt{(3)}} & \mathsf{\_}\,\mathsf{ACTION}\,\mathsf{\_}\,{\mathsf{nameIR}}_{\mathsf{controlPlane}}\,\left(\mathsf{\_}\right)\,\mathsf{\_} = \mathsf{actionDef} \\
+{\scriptstyle\mathtt{(4)}} & \mathsf{tableActionReferenceIR'} = \mathsf{prefixedNameIR}\,{\mathsf{nameIR}}_{\mathsf{controlPlane}}\,\left(\mathsf{argumentListIR}\right) \\
+{\scriptstyle\mathtt{(5)}} & \mathsf{tableActionIR} \\
  & \quad\quad= \begin{array}{l}
 \mathsf{annotationList}\,\mathsf{tableActionReferenceIR'}\,\mathbin{\mathtt{\#}} \\
 \quad\quad\left(\mathsf{parameterListIR}\,\mathbin{\mathtt{,}}\,{\mathsf{parameterListIR}}_{\mathsf{control}}\right)\,\mathbin{\mathtt{;}}
@@ -32508,7 +32460,6 @@ source: test-driver/tests/speclang.rs
 \quad\quad\quad\quad: \mathsf{STO}\,\mathsf{tableActionIR}
 \end{array}}}
 \end{array}
-\end{gathered}
 
 
 
@@ -32534,7 +32485,7 @@ source: test-driver/tests/speclang.rs
 
 \begin{array}{l}
 {\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{TableProperty\_inst-tableKeysPropertyIR}}} \\
-{\displaystyle \frac{}{\mathsf{objectId}\,\mathsf{IC}\,\mathsf{STO} \mathrel{\vdash} \mathsf{tableKeysPropertyIR} : \mathsf{STO}\,\mathsf{tableKeysPropertyIR}}}
+{\displaystyle \frac{}{\mathsf{IC}\,\mathsf{STO} \mathrel{\vdash} \mathsf{tableKeysPropertyIR} : \mathsf{STO}\,\mathsf{tableKeysPropertyIR}}}
 \end{array}
 
 
@@ -32544,27 +32495,21 @@ source: test-driver/tests/speclang.rs
 {\displaystyle \frac{\begin{array}{r@{\quad}l}
 {\scriptstyle\mathtt{(1)}} & \mathsf{IC}\,{\mathsf{STO}}_{\mathsf{0}} \mathrel{\vdash} \mathsf{tableActionListIR} : {\mathsf{STO}}_{\mathsf{1}}\,{\mathsf{tableActionListIR}}_{\mathsf{inst}} \\
 {\scriptstyle\mathtt{(2)}} & \mathsf{tableActionsPropertyIR} = \mathsf{ACTIONS}\,\mathbin{\mathtt{=}}\,\left\{{\mathsf{tableActionListIR}}_{\mathsf{inst}}\right\}
-\end{array}}{\begin{array}{l}
-\mathsf{objectId}\,\mathsf{IC}\,{\mathsf{STO}}_{\mathsf{0}} \\
-\quad\quad\mathrel{\vdash} \mathsf{ACTIONS}\,\mathbin{\mathtt{=}}\,\left\{\mathsf{tableActionListIR}\right\} : {\mathsf{STO}}_{\mathsf{1}}\,\mathsf{tableActionsPropertyIR}
-\end{array}}}
+\end{array}}{\mathsf{IC}\,{\mathsf{STO}}_{\mathsf{0}} \mathrel{\vdash} \mathsf{ACTIONS}\,\mathbin{\mathtt{=}}\,\left\{\mathsf{tableActionListIR}\right\} : {\mathsf{STO}}_{\mathsf{1}}\,\mathsf{tableActionsPropertyIR}}}
 \end{array}
 
 
 
 \begin{array}{l}
 {\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{TableProperty\_inst-tableDefaultActionPropertyIR}}} \\
-{\displaystyle \frac{}{\begin{array}{l}
-\mathsf{objectId}\,\mathsf{IC}\,\mathsf{STO} \\
-\quad\quad\mathrel{\vdash} \mathsf{tableDefaultActionPropertyIR} : \mathsf{STO}\,\mathsf{tableDefaultActionPropertyIR}
-\end{array}}}
+{\displaystyle \frac{}{\mathsf{IC}\,\mathsf{STO} \mathrel{\vdash} \mathsf{tableDefaultActionPropertyIR} : \mathsf{STO}\,\mathsf{tableDefaultActionPropertyIR}}}
 \end{array}
 
 
 
 \begin{array}{l}
 {\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{TableProperty\_inst-tableEntriesPropertyIR}}} \\
-{\displaystyle \frac{}{\mathsf{objectId}\,\mathsf{IC}\,\mathsf{STO} \mathrel{\vdash} \mathsf{tableEntriesPropertyIR} : \mathsf{STO}\,\mathsf{tableEntriesPropertyIR}}}
+{\displaystyle \frac{}{\mathsf{IC}\,\mathsf{STO} \mathrel{\vdash} \mathsf{tableEntriesPropertyIR} : \mathsf{STO}\,\mathsf{tableEntriesPropertyIR}}}
 \end{array}
 
 
@@ -32573,12 +32518,12 @@ source: test-driver/tests/speclang.rs
 \begin{array}{l}
 {\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{TableProperty\_inst-custom}}} \\
 {\displaystyle \frac{\begin{array}{r@{\quad}l}
-{\scriptstyle\mathtt{(1)}} & {\mathsf{IC}}_{\mathsf{inner}} = \mathsf{IC}\left[\mathsf{PATH} = \mathsf{objectId} \mathbin{+\!\!+} \mathsf{nameIR}\right] \\
+{\scriptstyle\mathtt{(1)}} & {\mathsf{IC}}_{\mathsf{inner}} = \mathrm{enter\_path\_i}\left(\mathsf{IC}, \mathsf{nameIR}\right) \\
 {\scriptstyle\mathtt{(2)}} & \mathsf{LOCAL}\,{\mathsf{IC}}_{\mathsf{inner}}\,{\mathsf{STO}}_{\mathsf{0}} \mathrel{\vdash} \mathsf{typedExpressionIR} : {\mathsf{STO}}_{\mathsf{1}}\,\mathsf{value} \\
 {\scriptstyle\mathtt{(3)}} & {\mathsf{tableCustomPropertyIR}}_{\mathsf{inst}} \\
  & \quad\quad= \mathsf{annotationList}\,\mathsf{constOptIR}\,\mathsf{CUSTOM\_CONST}\,\mathsf{nameIR}\,\left(\mathbin{\mathtt{=}}\,{\,}_{\mathsf{VALUE}}\,\mathsf{value}\right)\,\mathbin{\mathtt{;}}
 \end{array}}{\begin{array}{l}
-\mathsf{objectId}\,\mathsf{IC}\,{\mathsf{STO}}_{\mathsf{0}} \\
+\mathsf{IC}\,{\mathsf{STO}}_{\mathsf{0}} \\
 \quad\quad\mathrel{\vdash} \mathsf{annotationList}\,\mathsf{constOptIR}\,\mathsf{CUSTOM}\,\mathsf{nameIR}\,\left(\mathbin{\mathtt{=}}\,\mathsf{typedExpressionIR}\right)\,\mathbin{\mathtt{;}} \\
 \quad\quad\quad\quad: {\mathsf{STO}}_{\mathsf{1}}\,{\mathsf{tableCustomPropertyIR}}_{\mathsf{inst}}
 \end{array}}}
@@ -32589,7 +32534,7 @@ source: test-driver/tests/speclang.rs
 {\mathsf{tableCustomPropertyIR}}_{\mathsf{inst}} \\
 \quad\quad= \mathsf{annotationList}\,\mathsf{constOptIR}\,\mathsf{CUSTOM\_CONST}\,\mathsf{nameIR}\,\mathsf{constantInitializerIR}\,\mathbin{\mathtt{;}}
 \end{array}}{\begin{array}{l}
-\mathsf{objectId}\,\mathsf{IC}\,\mathsf{STO} \\
+\mathsf{IC}\,\mathsf{STO} \\
 \quad\quad\mathrel{\vdash} \mathsf{annotationList}\,\mathsf{constOptIR}\,\mathsf{CUSTOM\_CONST}\,\mathsf{nameIR}\,\mathsf{constantInitializerIR}\,\mathbin{\mathtt{;}} \\
 \quad\quad\quad\quad: \mathsf{STO}\,{\mathsf{tableCustomPropertyIR}}_{\mathsf{inst}}
 \end{array}}}
@@ -32601,15 +32546,15 @@ source: test-driver/tests/speclang.rs
 \begin{gathered}
 \begin{array}{l}
 {\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{TableProperties\_inst-nil}}} \\
-{\displaystyle \frac{}{\mathsf{objectId}\,\mathsf{IC}\,\mathsf{STO} \mathrel{\vdash} \epsilon : \mathsf{STO}\,\epsilon}}
+{\displaystyle \frac{}{\mathsf{IC}\,\mathsf{STO} \mathrel{\vdash} \epsilon : \mathsf{STO}\,\epsilon}}
 \end{array} \\[1ex]
 \begin{array}{l}
 {\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{TableProperties\_inst-cons}}} \\
 {\displaystyle \frac{\begin{array}{r@{\quad}l}
-{\scriptstyle\mathtt{(1)}} & \mathsf{objectId}\,\mathsf{IC}\,{\mathsf{STO}}_{\mathsf{0}} \mathrel{\vdash} {\mathsf{tablePropertyIR}}_{\mathsf{h}} : {\mathsf{STO}}_{\mathsf{1}}\,{\mathsf{tablePropertyIR}}_{\mathsf{h\_inst}} \\
-{\scriptstyle\mathtt{(2)}} & \mathsf{objectId}\,\mathsf{IC}\,{\mathsf{STO}}_{\mathsf{1}} \mathrel{\vdash} {{\mathsf{tablePropertyIR}}_{\mathsf{t}}}^{\ast} : {\mathsf{STO}}_{\mathsf{2}}\,{{\mathsf{tablePropertyIR}}_{\mathsf{t\_inst}}}^{\ast}
+{\scriptstyle\mathtt{(1)}} & \mathsf{IC}\,{\mathsf{STO}}_{\mathsf{0}} \mathrel{\vdash} {\mathsf{tablePropertyIR}}_{\mathsf{h}} : {\mathsf{STO}}_{\mathsf{1}}\,{\mathsf{tablePropertyIR}}_{\mathsf{h\_inst}} \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{IC}\,{\mathsf{STO}}_{\mathsf{1}} \mathrel{\vdash} {{\mathsf{tablePropertyIR}}_{\mathsf{t}}}^{\ast} : {\mathsf{STO}}_{\mathsf{2}}\,{{\mathsf{tablePropertyIR}}_{\mathsf{t\_inst}}}^{\ast}
 \end{array}}{\begin{array}{l}
-\mathsf{objectId}\,\mathsf{IC}\,{\mathsf{STO}}_{\mathsf{0}} \\
+\mathsf{IC}\,{\mathsf{STO}}_{\mathsf{0}} \\
 \quad\quad\mathrel{\vdash} {\mathsf{tablePropertyIR}}_{\mathsf{h}} \mathbin{::} {{\mathsf{tablePropertyIR}}_{\mathsf{t}}}^{\ast} \\
 \quad\quad\quad\quad: {\mathsf{STO}}_{\mathsf{2}}\,\left({\mathsf{tablePropertyIR}}_{\mathsf{h\_inst}} \mathbin{::} {{\mathsf{tablePropertyIR}}_{\mathsf{t\_inst}}}^{\ast}\right)
 \end{array}}}
@@ -32835,14 +32780,15 @@ source: test-driver/tests/speclang.rs
 {\displaystyle \frac{\begin{array}{r@{\quad}l}
 {\scriptstyle\mathtt{(1)}} & \mathsf{objectId} = \mathrm{objectId\_of\_table}\left({{\mathsf{IC}}_{\mathsf{0}}}_{\mathsf{PATH}}, \mathsf{annotationList}, \mathsf{nameIR}\right) \\
 {\scriptstyle\mathtt{(2)}} & {\mathsf{IC}}_{\mathsf{callee\_0}} = \mathrm{inherit\_i}\left(\mathsf{BLOCK}, {\mathsf{IC}}_{\mathsf{0}}\right) \\
-{\scriptstyle\mathtt{(3)}} & {\mathsf{IC}}_{\mathsf{frame}} = \mathrm{enter\_i}\left({\mathsf{IC}}_{\mathsf{callee\_0}}\right) \\
-{\scriptstyle\mathtt{(4)}} & \mathsf{objectId}\,{\mathsf{IC}}_{\mathsf{frame}}\,{\mathsf{STO}}_{\mathsf{0}} \mathrel{\vdash} \mathsf{tablePropertyListIR} : {\mathsf{STO}}_{\mathsf{1}}\,{\mathsf{tablePropertyListIR}}_{\mathsf{inst}} \\
-{\scriptstyle\mathtt{(5)}} & \mathsf{TBL} = \mathrm{init\_table}\left({\mathsf{tablePropertyListIR}}_{\mathsf{inst}}\right) \\
-{\scriptstyle\mathtt{(6)}} & \mathsf{frame} \mathbin{::} \mathsf{\_} = {{{\mathsf{IC}}_{\mathsf{frame}}}_{\mathsf{LOCAL}}}_{\mathsf{FRAMES}} \\
-{\scriptstyle\mathtt{(7)}} & {\mathsf{object}}_{\mathsf{table}} = \mathsf{TABLE}\,\mathsf{nameIR}\,\left\{\mathsf{frame}\,\mathsf{TBL}\right\} \\
-{\scriptstyle\mathtt{(8)}} & {\mathsf{STO}}_{\mathsf{2}} = \mathrm{add\_store}\left({\mathsf{STO}}_{\mathsf{1}}, \mathsf{objectId}, {\mathsf{object}}_{\mathsf{table}}\right) \\
-{\scriptstyle\mathtt{(9)}} & {\mathsf{IC}}_{\mathsf{1}} = \mathrm{add\_var\_i}\left(\mathsf{BLOCK}, {\mathsf{IC}}_{\mathsf{0}}, \mathsf{nameIR}, \mathsf{REF}\,\mathsf{objectId}\right) \\
-{\scriptstyle\mathtt{(10)}} & \mathsf{constantDeclarationIR} \\
+{\scriptstyle\mathtt{(3)}} & {\mathsf{IC}}_{\mathsf{callee\_1}} = {\mathsf{IC}}_{\mathsf{callee\_0}}\left[\mathsf{PATH} = \mathsf{objectId}\right] \\
+{\scriptstyle\mathtt{(4)}} & {\mathsf{IC}}_{\mathsf{frame}} = \mathrm{enter\_i}\left({\mathsf{IC}}_{\mathsf{callee\_1}}\right) \\
+{\scriptstyle\mathtt{(5)}} & {\mathsf{IC}}_{\mathsf{frame}}\,{\mathsf{STO}}_{\mathsf{0}} \mathrel{\vdash} \mathsf{tablePropertyListIR} : {\mathsf{STO}}_{\mathsf{1}}\,{\mathsf{tablePropertyListIR}}_{\mathsf{inst}} \\
+{\scriptstyle\mathtt{(6)}} & \mathsf{TBL} = \mathrm{init\_table}\left({\mathsf{tablePropertyListIR}}_{\mathsf{inst}}\right) \\
+{\scriptstyle\mathtt{(7)}} & \mathsf{frame} \mathbin{::} \mathsf{\_} = {{{\mathsf{IC}}_{\mathsf{frame}}}_{\mathsf{LOCAL}}}_{\mathsf{FRAMES}} \\
+{\scriptstyle\mathtt{(8)}} & {\mathsf{object}}_{\mathsf{table}} = \mathsf{TABLE}\,\mathsf{nameIR}\,\left\{\mathsf{frame}\,\mathsf{TBL}\right\} \\
+{\scriptstyle\mathtt{(9)}} & {\mathsf{STO}}_{\mathsf{2}} = \mathrm{add\_store}\left({\mathsf{STO}}_{\mathsf{1}}, \mathsf{objectId}, {\mathsf{object}}_{\mathsf{table}}\right) \\
+{\scriptstyle\mathtt{(10)}} & {\mathsf{IC}}_{\mathsf{1}} = \mathrm{add\_var\_i}\left(\mathsf{BLOCK}, {\mathsf{IC}}_{\mathsf{0}}, \mathsf{nameIR}, \mathsf{REF}\,\mathsf{objectId}\right) \\
+{\scriptstyle\mathtt{(11)}} & \mathsf{constantDeclarationIR} \\
  & \quad\quad= {\,}_{\mathsf{EMPTY}}\,\mathsf{CONST}\,\mathsf{typeIR}\,\mathsf{nameIR}\,\left(\mathbin{\mathtt{=}}\,{\,}_{\mathsf{VALUE}}\,\left(\mathsf{REF}\,\mathsf{objectId}\right)\right)\,\mathbin{\mathtt{;}}
 \end{array}}{\begin{array}{l}
 {\mathsf{IC}}_{\mathsf{0}}\,{\mathsf{STO}}_{\mathsf{0}} \\
@@ -37602,7 +37548,7 @@ source: test-driver/tests/speclang.rs
 \quad\quad\mathsf{referenceExpressionIR}, \\
 \quad\quad\mathsf{argumentListIR}
 \end{array}\right) \\
-{\scriptstyle\mathtt{(2)}} & \mathsf{\_}\,\mathsf{ACTION}\,\mathsf{nameIR}\,\left(\mathsf{parameterListIR}\right)\,\mathsf{blockStatementIR} = \mathsf{actionDef} \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{\_}\,\mathsf{ACTION}\,\mathsf{nameIR}\,\mathsf{\_}\,\left(\mathsf{parameterListIR}\right)\,\mathsf{blockStatementIR} = \mathsf{actionDef} \\
 {\scriptstyle\mathtt{(3)}} & \mathsf{actionCallee} \\
  & \quad\quad= \mathsf{ACTION}\,{\mathsf{p}}_{\mathsf{ref}}\,\mathbin{\mathtt{.}}\,\mathsf{nameIR}\,\left(\mathsf{parameterListIR}\,\mathbin{\mathtt{\#}}\,{{\mathsf{id}}_{\mathsf{default}}}^{\ast}\right)\,\mathsf{blockStatementIR}
 \end{array}}{\begin{array}{l}
