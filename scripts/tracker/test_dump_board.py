@@ -39,7 +39,7 @@ def test_extract_from_fixture():
 
 def test_extract_satisfies_check():
     """The extracted mismatch item matches the real excludes row it mirrors
-    (excludes/**/i67-c5240-self-nesting-struct.exclude, see test_tracker_lib.py),
+    (tests/p4/excludes/**/i67-c5240-self-nesting-struct.exclude, see test_tracker_lib.py),
     proving the dump shape is actually consumable by check().
 
     The fixture's `Upstream issue` is the real URL the board seeds

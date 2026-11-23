@@ -12,7 +12,7 @@ export CARGO_TARGET_DIR
 # Recursive Rust tests still use the caller's parallel job count
 .NOTPARALLEL:
 
-.PHONY: build release debug fmt fmt-check lint rustdoc clean promote
+.PHONY: build release debug fmt fmt-check lint rustdoc test clean
 
 build release debug:
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
@@ -20,21 +20,12 @@ build release debug:
 	rm -f ./$(SPEC)
 	cp "$(CARGO_TARGET_DIR)/$(if $(filter debug,$@),debug,release)/p4spectec" ./$(SPEC)
 
-fmt fmt-check lint rustdoc:
+fmt fmt-check lint rustdoc test:
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
-# End-to-end acceptance and explicit snapshot updates
-TEST_TARGETS := test test-expected test-elab test-algo test-structure test-prose \
-  test-adoc test-p4parse test-run-al test-run-sl test-run-pl \
-  test-sim-al test-sim-sl test-sim-pl test-micro test-diagnostics \
-  test-promote test-diagnostics-promote
-
-.PHONY: $(TEST_TARGETS)
-# Resolve TEST_LOG here; the recursive make runs inside the Rust crate
-$(TEST_TARGETS):
-	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $(if $(TEST_LOG),TEST_LOG="$(abspath $(TEST_LOG))") $@
-
-promote: test-promote
+# Test aliases of the Rust crate, e.g. `make test-run-sl`
+test-%:
+	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
 # Specification documents
 .PHONY: p4spec-draft p4spec-draft-html p4spec-release p4spec-release-html

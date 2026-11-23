@@ -58,19 +58,13 @@ pub enum Spec {
 #[derive(Clone, Copy)]
 pub struct Config {
     /// Memoize pure calls.
-    cache: bool,
+    pub cache: bool,
     /// Check determinism of candidate selection.
-    det: bool,
+    pub det: bool,
     /// Type-check arguments and results at call boundaries.
-    guard: bool,
+    pub guard: bool,
     /// Turn relation and function calls in tail position into tail calls.
-    tco: bool,
-}
-
-impl Config {
-    pub fn new(cache: bool, det: bool, guard: bool, tco: bool) -> Self {
-        Self { cache, det, guard, tco }
-    }
+    pub tco: bool,
 }
 
 /// A diagnostic produced while building a runner.

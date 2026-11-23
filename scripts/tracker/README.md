@@ -10,9 +10,9 @@ Scripts that keep the kaist-plrg tracker boards in sync with this repo.
 
 - `tracker_lib.py`: parses an `.exclude` path into `name`, `repo`, `upstream`, `layer`, `category`, `status`, `#Pos`, `#Neg`.
 - `dump_board.py`: dumps a board via GraphQL into flat `{field: value}` items. `--from-file` reads a saved response.
-- `tracker_check.py`: Mismatches drift check between `excludes/` and the board.
+- `tracker_check.py`: Mismatches drift check between `tests/p4/excludes/` and the board.
 - `label_check.py`: checks that every `label:soundness` issue is on the Soundness board.
-- `sync_board.py`: writes the fields derived from `excludes/` onto the Mismatches board.
+- `sync_board.py`: writes the fields derived from `tests/p4/excludes/` onto the Mismatches board.
 - `sync_upstream_state.py`: fills `Upstream state` from each item's `Upstream issue`.
 - `test_*.py`, `testdata/`: offline tests, run by the `unit` CI job.
 
@@ -26,14 +26,14 @@ Fields:
 - `Category`: `p4c`, `p4-spec`, `p4c-specific`, `target-specific`, `p4testgen`.
 - `State`: `reported` → `confirmed` → `discussed` → `pending` → `patched`, or `future`, `out-of-scope`, `implicit`.
 - `Repo issue`, `Upstream issue`, `Upstream state` (`open`/`closed`/`merged`), `Patch PR`.
-- `#Pos`, `#Neg`: test counts from `excludes/`.
+- `#Pos`, `#Neg`: test counts from `tests/p4/excludes/`.
 - `Arch` (dynamic only), `Owner`, `Discussed` (e.g. `2026-04`), `Notes`.
 
 Maintenance:
 - Edit `.exclude` files only; don't edit derived fields on the board.
 - Filename: `i<repo>-[c|s]<n>-<name>.exclude` (see `tracker_lib.parse_name`). The directory sets `Category` and `State`.
 - On push to `main` and daily, `sync_board.py` updates `Name`, `Category`, `State`, `Repo issue`, `Upstream issue`, `#Pos`, `#Neg`, renames renamed items, and adds new ones. Hand-written fields are left alone.
-- On PRs touching `excludes/` or `scripts/tracker/`, the `drift` job fails when:
+- On PRs touching `tests/p4/excludes/` or `scripts/tracker/`, the `drift` job fails when:
   - an `.exclude` has no board item;
   - a board item has no `.exclude`, unless its `State` is `patched`, `future`, or `out-of-scope`, or its `Status` is `Done`;
   - a derived field disagrees.

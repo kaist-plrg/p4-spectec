@@ -1,6 +1,6 @@
-"""Push excludes/ into the Mismatches board (the inverse of tracker_check).
+"""Push tests/p4/excludes/ into the Mismatches board (the inverse of tracker_check).
 
-`excludes/` is authoritative for a mismatch's derivable fields; this makes
+`tests/p4/excludes/` is authoritative for a mismatch's derivable fields; this makes
 the board mirror them so the drift check stays green. For every `.exclude`
 it sets the board item's `Name`, `Category`, `State`, `Repo issue`,
 `Upstream issue`, `#Pos`, `#Neg` from the file/dir/filename, renames an item
@@ -157,10 +157,10 @@ def _add_item(pid, fmeta, target, owner):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Push excludes/ into the Mismatches board.")
+    ap = argparse.ArgumentParser(description="Push tests/p4/excludes/ into the Mismatches board.")
     ap.add_argument("--project", type=int, required=True, help="Mismatches project number")
     ap.add_argument("--owner", default="kaist-plrg")
-    ap.add_argument("--excludes", default="excludes")
+    ap.add_argument("--excludes", default="tests/p4/excludes")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 

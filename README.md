@@ -112,20 +112,20 @@ or `Program_inst` for instantiation. SL is the default interpreter;
 `--al`, `--sl`, and `--pl` select a language explicitly.
 
 ```shell
-./bin/p4spectec run spec --rel Program_ok -i p4c/p4include \
-  -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4
+./bin/p4spectec run spec --rel Program_ok -i tests/p4/p4c/p4include \
+  -p tests/p4/p4c/testdata/p4_16_samples/basic_routing-bmv2.p4
 
-./bin/p4spectec run spec --rel Program_inst -i p4c/p4include \
-  -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 --al
+./bin/p4spectec run spec --rel Program_inst -i tests/p4/p4c/p4include \
+  -p tests/p4/p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 --al
 ```
 
 `sim` executes packet tests in STF format. The supported architectures are
 `v1model`, `ebpf`, and `psa`:
 
 ```shell
-./bin/p4spectec sim spec --arch v1model -i p4c/p4include \
-  -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 \
-  --stf testdata/p4testgen/basic_routing-bmv2/basic_routing-bmv2_1.stf
+./bin/p4spectec sim spec --arch v1model -i tests/p4/p4c/p4include \
+  -p tests/p4/p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 \
+  --stf tests/p4/p4testgen/basic_routing-bmv2/basic_routing-bmv2_1.stf
 ```
 
 Both commands enable interpreter caching and deterministic execution checks by
@@ -173,48 +173,37 @@ To splice another skeleton, use the Rust CLI's long options:
 
 ## Development and tests
 
-Run these commands from the project root:
-
 ```shell
-make fmt          # Format the product and E2E driver
-make fmt-check    # Check formatting without rewriting files
-make lint         # Clippy for the product and E2E driver
-make rustdoc      # Build the Rust API documentation
-make test         # Run all registered E2E suites
+make fmt          # format
+make fmt-check    # check formatting
+make lint         # Clippy
+make rustdoc      # API documentation
+make test         # every test (needs `cargo install --locked cargo-nextest`)
 ```
 
-`make test` runs specification/document snapshots, P4 parsing, diagnostics,
-and AL/SL/PL execution and simulation.
-Suite registrations live in `p4spectec/test-driver/suites/`, one TOML file per runner.
-Execution, simulation, and micro tests run one named configuration at a time
-(`run sl` runs the `sl` configuration of `suites/run.toml`),
-which sets the interpreter language, caching, and determinism checking.
+[TESTING.md](TESTING.md) explains how to run tests, add a test, and update snapshots.
 
-Individual targets are available for focused runs:
-
-| Targets | Coverage |
+| Test file (`p4spectec/test-driver/tests/`) | Checks |
 | --- | --- |
-| `test-elab`, `test-algo`, `test-structure`, `test-prose` | Specification processing |
-| `test-adoc` | AsciiDoc snapshots and anchor determinism |
-| `test-p4parse` | P4 parse/unparse/parse corpus |
-| `test-diagnostics` | Source/expected diagnostics, including CLI and splicing errors |
-| `test-run-al`, `test-run-sl`, `test-run-pl` | P4 execution corpus |
-| `test-sim-al`, `test-sim-sl`, `test-sim-pl` | Packet simulation corpus |
-| `test-expected` | All of the above except simulation |
+| `speclang.rs` | the specification printed at each stage, and its AsciiDoc and LaTeX |
+| `parse.rs`, `elab.rs`, `algo.rs`, `structure.rs`, `prose.rs` | errors and warnings of each conversion stage |
+| `specdoc.rs`, `splice.rs` | AsciiDoc rendering and splicing warnings and errors |
+| `run.rs` | P4 execution corpora and relation errors in AL, SL, PL |
+| `sim.rs` | packet simulation corpora and failures in AL, SL, PL |
+| `p4parse.rs` | P4 parse, print, and reparse, and P4 parse errors |
+| `cli.rs` | command-line option errors |
 
-Normal test targets clear `UPDATE_EXPECT` and compare against stored results.
-To deliberately regenerate the elaboration, AL, prose, and AsciiDoc snapshots,
-run `make promote` (also available as `make test-promote`). Diagnostics have a
-separate `make test-diagnostics-promote` target. These commands rerun the suites;
-review their diffs before committing. P4 parsing, structure, execution,
-simulation, and exclusions are not promoted by these targets.
+Run part of the tests:
 
-`make clean` removes `bin/p4spectec` and the selected Cargo build directory.
+```shell
+make test-elab                # one test file
+make test PROFILE=ci          # the tests CI runs
+```
 
-CI runs Rust builds, formatting, Clippy, API documentation, E2E acceptance, and
-HTML specification generation for pull requests and pushes to `rust-port`
-and `main`, version tags, and manual dispatches. Version tags and manual
-runs also render the P4 release PDF specification.
+- Each test file `<name>.rs` keeps its inputs and expected outputs under `tests/p4spectec/<name>/`.
+- P4 and STF corpora live under `tests/p4/`, with `tests/p4/excludes/` listing skipped cases and `tests/p4/patches/` replacing some.
+- A changed output fails its test and leaves `<name>.snap.new`; `INSTA_UPDATE=always make test` accepts every change.
+- Each corpus test writes one line per case to `logs/<test>.log`.
 
 ## Retired OCaml workflows
 

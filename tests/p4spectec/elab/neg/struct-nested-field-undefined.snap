@@ -1,0 +1,15 @@
+---
+source: test-driver/src/harness/fixture.rs
+---
+error[elab/struct-field-undefined]: type 'inner' has no field 'MISSING'
+  ┌─ elab/neg/struct-nested-field-undefined.watsup:4:29
+  │
+1 │ syntax inner = { COUNT nat }
+  │                ------------- struct declared here
+2 │ syntax outer = { INNER inner }
+3 │ dec $f(outer) : outer
+  │                 ----- return value of function '$f' expects 'outer'
+4 │ def $f(outer) = outer[.INNER.MISSING = 1]
+  │                             ^^^^^^^^ unknown field
+  │
+  = available fields: COUNT

@@ -108,17 +108,16 @@ fn eval_alternatives<'global, Tier, Iface: Interface, Ext: Extern>(
     blocks: &[ast::Block<Tier>],
 ) -> Backtrack<(Context<'global>, Flow)> {
     let det = runner_ctx.interp().config.det;
-    // Every alternative starts from the enclosing bindings
-    let mut eval = |block| {
-        let (_, flow) = unwrap!(evaluate(runner_ctx, ctx.clone(), block));
-        ok!(flow)
+    // Every alternative starts from the enclosing bindings, and a mismatch ends only it
+    let eval = |block| {
+        let result = evaluate(runner_ctx, ctx.clone(), block).map(|(_, flow)| flow);
+        Flow::cont_from_unmatch(result)
     };
     let flow = if det {
         // Deterministic choice checks alternatives for conflicting conclusions
         unwrap!(flow::choose_deterministic(blocks, eval))
     } else {
-        // A mismatch ends this alternative, but permits trying the next one
-        unwrap!(flow::choose_sequential(blocks, |block| { Flow::cont_from_unmatch(eval(block)) }))
+        unwrap!(flow::choose_sequential(blocks, eval))
     };
     // Local alternative bindings never escape
     ok!((ctx, flow))

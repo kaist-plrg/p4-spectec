@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 use p4spectec::lang::data::arena::Arena;
 
-use p4spectec::interface::p4::P4Interface;
+use p4spectec::interface::{self, p4::P4Interface};
 
 use p4spectec::runner::{self, Hooks, Runner};
 
@@ -121,17 +121,14 @@ pub fn build(
     }
 }
 
-/// Builds the AL or SL runner, whichever the specification is.
+/// Builds the P4 runner of whichever stage the specification holds.
 fn build_for_arch<Arch: RuntimeInterface>(
     spec: runner::Spec,
     config: runner::Config,
     arch: Arch,
 ) -> Result<Simulator, SimError> {
     let mut arena = Arena::new();
-    let runner = match spec {
-        runner::Spec::Al(spec) => runner::build_al(&mut arena, spec, config, arch)?,
-        runner::Spec::Sl(spec) => runner::build_sl(&mut arena, spec, config, arch)?,
-        runner::Spec::Pl(spec) => runner::build_pl(&mut arena, spec, config, arch)?,
-    };
+    let interface = interface::p4(&spec);
+    let runner = Runner::new(&mut arena, spec, config, interface, arch)?;
     Ok(Simulator::new(arena, runner))
 }

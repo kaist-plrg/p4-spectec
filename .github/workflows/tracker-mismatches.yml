@@ -4,7 +4,7 @@
 # every PR touching them; it's the primary safety net and also covers
 # dump_board.py's GraphQL extraction against a fixture.
 #
-# `drift` dumps the Mismatches Projects board and diffs it against excludes/
+# `drift` dumps the Mismatches Projects board and diffs it against tests/p4/excludes/
 # in both directions (an .exclude with no board item; a board item whose
 # .exclude was deleted; a field that disagrees). It no-ops
 # ("... not configured; skipping") until TRACKER_PAT and
@@ -14,7 +14,7 @@ name: "Bug/test tracker: Mismatches drift check"
 on:
   pull_request:
     paths:
-      - "excludes/**"
+      - "tests/p4/excludes/**"
       - "scripts/tracker/**"
   workflow_dispatch:
 
@@ -41,7 +41,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Dump Mismatches board and diff against excludes/
+      - name: Dump Mismatches board and diff against tests/p4/excludes/
         run: |
           if [ -z "$GH_TOKEN" ] || [ -z "$PROJECT_NUMBER" ]; then
             echo "Mismatches board not configured; skipping"

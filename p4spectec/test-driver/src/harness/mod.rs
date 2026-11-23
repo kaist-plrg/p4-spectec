@@ -1,29 +1,59 @@
 //! Test infrastructure shared by every suite
 //!
-//! `load` reads a suite's registration from `suites/<name>.toml`.
-//! `corpus` discovers sources and compares per-file results,
-//! `interpreter` builds runners, `log` writes timing logs,
-//! `output` silences interpreter stdout,
-//! and `worker` runs tests in a process killed after a timeout.
+//! `root` and `collect` locate test inputs,
+//! and `Outcome` names what a case must reach.
+//! `corpus` runs corpora,
+//! `fixture` lists a fixture directory under `tests/p4spectec/` and checks its snapshots,
+//! and `output` silences interpreter stdout.
 //! Nothing here depends on a particular suite.
 
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
+
 pub mod corpus;
-pub mod interpreter;
-pub mod log;
+pub mod fixture;
 pub mod output;
-pub mod worker;
-
-use std::{fs, path::Path};
-
-use serde::de::DeserializeOwned;
 
 pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Reads the registration `suites/<name>.toml` with its path attached to errors.
-pub fn load<T: DeserializeOwned>(name: &str) -> Result<T> {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("suites/{name}.toml"));
-    let text = fs::read_to_string(&path)
-        .map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
-    toml::from_str(&text).map_err(|error| Error::from(format!("{}: {error}", path.display())))
+/// Outcome of a case: the one a suite requires, or the one a case reached.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Outcome {
+    Pass,
+    Fail,
+}
+
+impl Outcome {
+    /// Spells the outcome as run logs record it.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Pass => "pass",
+            Self::Fail => "fail",
+        }
+    }
+}
+
+/// Returns the repository root, against which test paths are spelled.
+pub fn root() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
+}
+
+/// Lists the files under `dir` ending in `suffix`, recursively and sorted by path.
+pub fn collect(dir: &Path, suffix: &str) -> Result<Vec<PathBuf>> {
+    let mut paths = fs::read_dir(dir)?
+        .map(|entry| entry.map(|entry| entry.path()))
+        .collect::<std::io::Result<Vec<_>>>()?;
+    paths.sort();
+    let mut files = Vec::new();
+    for path in paths {
+        if fs::metadata(&path)?.is_dir() {
+            files.extend(collect(&path, suffix)?);
+        } else if path.to_str().is_some_and(|path| path.ends_with(suffix)) {
+            files.push(path);
+        }
+    }
+    Ok(files)
 }
