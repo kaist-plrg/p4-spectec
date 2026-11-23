@@ -23,15 +23,15 @@ use p4spectec_test::harness::{
     fixture::{check, fixtures, frames_short, must_pass},
 };
 
-const P4C_SAMPLES: &str = "p4c/testdata/p4_16_samples";
-const P4TESTGEN: &str = "testdata/p4testgen";
-const CUSTOM: &str = "testdata/custom";
-const REGRESSION: &str = "testdata/regression/sim";
-const PATCHES_V1MODEL: &str = "patches/v1model";
+const P4C_SAMPLES: &str = "tests/p4/p4c/testdata/p4_16_samples";
+const P4TESTGEN: &str = "tests/p4/p4testgen";
+const CUSTOM: &str = "tests/p4/custom";
+const REGRESSION: &str = "tests/p4/regression/sim";
+const PATCHES_V1MODEL: &str = "tests/p4/patches/v1model";
 
-const HEADERS: &str = "excludes/headers";
-const STATIC: &str = "excludes/static";
-const DYNAMIC: &str = "excludes/dynamic";
+const HEADERS: &str = "tests/p4/excludes/headers";
+const STATIC: &str = "tests/p4/excludes/static";
+const DYNAMIC: &str = "tests/p4/excludes/dynamic";
 
 /// Runner options of every corpus.
 const CONFIG: Config = Config { cache: true, det: true, guard: false, tco: true };
@@ -155,7 +155,7 @@ impl Suite {
             .excludes(self.dirs_exclude)?;
         let spec = p4spectec::runner_spec_with_warnings(language, &[PathBuf::from("spec")]).0?;
         let mut simulator = p4spectec_sim::build(spec, self.arch, CONFIG)?;
-        let paths_include = [PathBuf::from("p4c/p4include")];
+        let paths_include = [PathBuf::from("tests/p4/p4c/p4include")];
         corpus.run(
             &format!("sim-{}-{}", self.name, format!("{language:?}").to_lowercase()),
             |paths| match simulator.run_stf_test(&paths_include, &paths[0], &paths[1], |_| {}) {
@@ -189,7 +189,7 @@ impl Fixtures {
             "simulator build",
             p4spectec_sim::build(spec, self.arch, CONFIG),
         );
-        let paths_include = [PathBuf::from("../../p4c/p4include")];
+        let paths_include = [PathBuf::from("../p4/p4c/p4include")];
         for path in paths {
             match simulator.run_stf_test(&paths_include, &path, &path.with_extension("stf"), |_| {})
             {

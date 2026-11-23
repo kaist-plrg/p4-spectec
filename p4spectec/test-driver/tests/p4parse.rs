@@ -28,7 +28,7 @@ use p4spectec_test::harness::{
 };
 
 /// Holds the `.exclude` files of the programs whose roundtrip fails.
-const P4PARSE: &str = "excludes/p4parse";
+const P4PARSE: &str = "tests/p4/excludes/p4parse";
 
 // = Helpers
 
@@ -104,7 +104,7 @@ impl Suite {
         let corpus = Corpus::files(self.dir, ".p4")?.excludes(self.dirs_exclude)?;
         let spec_al = p4spectec::algo(&[PathBuf::from("spec")])?;
         let unparser = P4Unparser::from_al_spec(&spec_al);
-        let paths_include = [PathBuf::from("p4c/p4include")];
+        let paths_include = [PathBuf::from("tests/p4/p4c/p4include")];
         corpus.run(&format!("p4parse-{}", self.name), |paths| {
             roundtrip(&unparser, &paths_include, &paths[0])
         })
@@ -142,8 +142,8 @@ impl Fixtures {
 
 const P4C_POS: Suite = Suite {
     name: "p4c-pos",
-    dir: "p4c/testdata/p4_16_samples",
-    dirs_exclude: &["excludes/headers", P4PARSE],
+    dir: "tests/p4/p4c/testdata/p4_16_samples",
+    dirs_exclude: &["tests/p4/excludes/headers", P4PARSE],
 };
 
 #[test]
@@ -151,7 +151,7 @@ fn p4c_pos() {
     P4C_POS.p4parse();
 }
 
-const CUSTOM: Suite = Suite { name: "custom", dir: "testdata/custom", dirs_exclude: &[] };
+const CUSTOM: Suite = Suite { name: "custom", dir: "tests/p4/custom", dirs_exclude: &[] };
 
 #[test]
 fn custom() {
@@ -159,7 +159,7 @@ fn custom() {
 }
 
 const P4C_NEG: Suite =
-    Suite { name: "p4c-neg", dir: "p4c/testdata/p4_16_errors", dirs_exclude: &[P4PARSE] };
+    Suite { name: "p4c-neg", dir: "tests/p4/p4c/testdata/p4_16_errors", dirs_exclude: &[P4PARSE] };
 
 #[test]
 fn p4c_neg() {

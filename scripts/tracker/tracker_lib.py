@@ -11,7 +11,7 @@ def parse_name(stem):
     return {"repo": repo, "upstream": upstream, "name": stem}
 
 
-# Mismatch layers; other excludes/ trees (e.g. micro, metacirc-*) are not on the board
+# Mismatch layers; other tests/p4/excludes/ trees (e.g. micro, metacirc-*) are not on the board
 LAYERS = ("static", "dynamic")
 
 

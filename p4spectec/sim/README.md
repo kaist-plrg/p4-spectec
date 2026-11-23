@@ -5,9 +5,9 @@
 Runs STF packet tests on a P4 program, with the P4-SpecTec specification as the P4 interpreter.
 
 ```shell
-./bin/p4spectec sim spec --arch v1model -i p4c/p4include \
-  -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 \
-  --stf testdata/p4testgen/basic_routing-bmv2/basic_routing-bmv2_1.stf
+./bin/p4spectec sim spec --arch v1model -i tests/p4/p4c/p4include \
+  -p tests/p4/p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 \
+  --stf tests/p4/p4testgen/basic_routing-bmv2/basic_routing-bmv2_1.stf
 
 make test-sim-sl    # every STF test, on the SL interpreter (also -al, -pl)
 ```

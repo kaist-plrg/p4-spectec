@@ -34,8 +34,8 @@ use p4spectec_test::harness::{
     fixture::{check, fixtures, frames_short, must_pass},
 };
 
-const HEADERS: &str = "excludes/headers";
-const STATIC: &str = "excludes/static";
+const HEADERS: &str = "tests/p4/excludes/headers";
+const STATIC: &str = "tests/p4/excludes/static";
 
 /// Runner options of every corpus.
 const CONFIG: Config = Config { cache: true, det: true, guard: false, tco: true };
@@ -108,7 +108,7 @@ impl Suite {
         let spec = p4spectec::runner_spec_with_warnings(language, &[PathBuf::from("spec")]).0?;
         let interface = interface::p4(&spec);
         let mut runner = Runner::new(&mut arena, spec, CONFIG, interface, Dummy::default())?;
-        let paths_include = [PathBuf::from("p4c/p4include")];
+        let paths_include = [PathBuf::from("tests/p4/p4c/p4include")];
         corpus.run(
             &format!("run-{}-{}", self.name, format!("{language:?}").to_lowercase()),
             |paths| {
@@ -192,7 +192,7 @@ const P4C_POS: Suite = Suite {
     name: "p4c-pos",
     relation: "Program_inst",
     outcome: Outcome::Pass,
-    dir: "p4c/testdata/p4_16_samples",
+    dir: "tests/p4/p4c/testdata/p4_16_samples",
     dirs_exclude: &[HEADERS, STATIC],
 };
 
@@ -215,7 +215,7 @@ const P4C_NEG: Suite = Suite {
     name: "p4c-neg",
     relation: "Program_ok",
     outcome: Outcome::Fail,
-    dir: "p4c/testdata/p4_16_errors",
+    dir: "tests/p4/p4c/testdata/p4_16_errors",
     dirs_exclude: &[STATIC],
 };
 
@@ -238,7 +238,7 @@ const REGRESSION_POS: Suite = Suite {
     name: "regression-pos",
     relation: "Program_inst",
     outcome: Outcome::Pass,
-    dir: "testdata/regression/pos",
+    dir: "tests/p4/regression/pos",
     dirs_exclude: &[STATIC],
 };
 
@@ -261,7 +261,7 @@ const REGRESSION_NEG: Suite = Suite {
     name: "regression-neg",
     relation: "Program_ok",
     outcome: Outcome::Fail,
-    dir: "testdata/regression/neg",
+    dir: "tests/p4/regression/neg",
     dirs_exclude: &[STATIC],
 };
 

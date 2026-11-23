@@ -22,7 +22,7 @@ def test_parse_bare():
 
 
 def test_walk_real_excludes():
-    root = Path(__file__).parents[2] / "excludes"
+    root = Path(__file__).parents[2] / "tests" / "p4" / "excludes"
     rows = walk_excludes(root)
     # Every .exclude under the static and dynamic layers yields one row
     files = [p for layer in ("static", "dynamic") for p in (root / layer).rglob("*.exclude")]
@@ -38,5 +38,5 @@ def test_walk_skips_non_mismatch_layers(tmp_path):
     for layer in ("static", "micro"):
         d = tmp_path / layer / "p4c" / "confirmed"
         d.mkdir(parents=True)
-        (d / "i1-name.exclude").write_text("p4c/testdata/p4_16_errors/a.p4\n")
+        (d / "i1-name.exclude").write_text("tests/p4/p4c/testdata/p4_16_errors/a.p4\n")
     assert [r["layer"] for r in walk_excludes(tmp_path)] == ["static"]

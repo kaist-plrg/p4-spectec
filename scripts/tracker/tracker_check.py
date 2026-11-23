@@ -1,4 +1,4 @@
-"""CI drift check: keep excludes/ rows in sync with the GitHub Projects board.
+"""CI drift check: keep tests/p4/excludes/ rows in sync with the GitHub Projects board.
 
 Pure core (`check`) is offline and unit-tested with injected data. The
 `__main__` block wires real inputs (excludes via tracker_lib.walk_excludes,
@@ -45,7 +45,7 @@ def _upstream_token(v):
 
 
 def check(excludes_rows, board_items):
-    """Compare excludes/ rows against board items.
+    """Compare tests/p4/excludes/ rows against board items.
 
     Order-independent: keyed by name via dicts, never positional.
     Returns a list of human-readable violation strings (empty = OK).
@@ -118,10 +118,10 @@ def _load_board_items(path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="CI drift check: verify excludes/ rows match the GitHub Projects board."
+        description="CI drift check: verify tests/p4/excludes/ rows match the GitHub Projects board."
     )
-    parser.add_argument("--excludes", default="excludes",
-                         help="Path to the excludes/ directory (default: excludes)")
+    parser.add_argument("--excludes", default="tests/p4/excludes",
+                         help="Path to the tests/p4/excludes/ directory (default: tests/p4/excludes)")
     parser.add_argument("--board", required=True,
                          help="Path to a JSON dump of board items "
                               "(dump_board.py's {\"items\": [...]}, or a bare list)")

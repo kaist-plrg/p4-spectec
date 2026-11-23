@@ -112,20 +112,20 @@ or `Program_inst` for instantiation. SL is the default interpreter;
 `--al`, `--sl`, and `--pl` select a language explicitly.
 
 ```shell
-./bin/p4spectec run spec --rel Program_ok -i p4c/p4include \
-  -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4
+./bin/p4spectec run spec --rel Program_ok -i tests/p4/p4c/p4include \
+  -p tests/p4/p4c/testdata/p4_16_samples/basic_routing-bmv2.p4
 
-./bin/p4spectec run spec --rel Program_inst -i p4c/p4include \
-  -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 --al
+./bin/p4spectec run spec --rel Program_inst -i tests/p4/p4c/p4include \
+  -p tests/p4/p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 --al
 ```
 
 `sim` executes packet tests in STF format. The supported architectures are
 `v1model`, `ebpf`, and `psa`:
 
 ```shell
-./bin/p4spectec sim spec --arch v1model -i p4c/p4include \
-  -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 \
-  --stf testdata/p4testgen/basic_routing-bmv2/basic_routing-bmv2_1.stf
+./bin/p4spectec sim spec --arch v1model -i tests/p4/p4c/p4include \
+  -p tests/p4/p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 \
+  --stf tests/p4/p4testgen/basic_routing-bmv2/basic_routing-bmv2_1.stf
 ```
 
 Both commands enable interpreter caching and deterministic execution checks by
@@ -199,7 +199,7 @@ make test PROFILE=ci          # the tests CI runs
 ```
 
 - Each test file `<name>.rs` keeps its inputs and expected outputs under `tests/p4spectec/<name>/`.
-- P4 and STF corpora live under `testdata/` and `p4c/testdata/`, with `excludes/` listing skipped cases and `patches/` replacing some.
+- P4 and STF corpora live under `tests/p4/`, with `tests/p4/excludes/` listing skipped cases and `tests/p4/patches/` replacing some.
 - A changed output fails its test and leaves `<name>.snap.new`; `INSTA_UPDATE=always make test` accepts every change.
 - Each corpus test writes one line per case to `logs/<test>.log`.
 
