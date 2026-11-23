@@ -1,78 +1,27 @@
-//! Source discovery and per-file results for corpus suites
+//! Corpus discovery and execution for the integration tests
 //!
-//! `collect` discovers sources under a root,
-//! and `collect_excludes` reads exclusion lists.
-//! `Results` compares per-test outcomes with one CSV expected file per suite.
+//! `collect_excludes` reads exclusion lists.
+//! A test runs a corpus in its own process, from the repository root:
+//! `Corpus::files(dir, ".p4")?.excludes(dirs)?.run(name, run_case)?.check(outcome)`
+//! runs every case not excluded through `run_case`
+//! and checks that each reaches `outcome`,
+//! panicking with the others and their details.
+//! The run also writes `logs/<name>.log` under the repository root, whatever the working directory:
+//! one `<outcome>,<paths>,<seconds>` line per case in corpus order
+//! (seconds empty for an excluded case).
 
 use std::{
-    collections::{BTreeMap, BTreeSet},
-    fs,
+    collections::BTreeSet,
+    fs::{self, File},
+    io::Write,
     path::{Path, PathBuf},
+    time::Instant,
 };
 
-use indicatif::{ProgressBar, ProgressStyle};
+use super::{Outcome, Result, collect, output::SilenceStdout, root};
 
-use super::{Error, Result};
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Outcome {
-    Pass,
-    Fail,
-    ParseFail,
-    ReparseFail,
-    RoundtripFail,
-    Exclude,
-    Timeout,
-}
-
-impl Outcome {
-    /// Spells the outcome as recorded in expected files.
-    pub fn name(self) -> &'static str {
-        match self {
-            Self::Pass => "pass",
-            Self::Fail => "fail",
-            Self::ParseFail => "parse-fail",
-            Self::ReparseFail => "reparse-fail",
-            Self::RoundtripFail => "roundtrip-fail",
-            Self::Exclude => "exclude",
-            Self::Timeout => "timeout",
-        }
-    }
-
-    /// Reads an outcome spelled as in expected files.
-    pub fn from_name(name: &str) -> Result<Self> {
-        [
-            Self::Pass,
-            Self::Fail,
-            Self::ParseFail,
-            Self::ReparseFail,
-            Self::RoundtripFail,
-            Self::Exclude,
-            Self::Timeout,
-        ]
-        .into_iter()
-        .find(|outcome| outcome.name() == name)
-        .ok_or_else(|| Error::from(format!("unknown outcome {name}")))
-    }
-}
-
-pub fn collect(dir: &Path, suffix: &str) -> Result<Vec<PathBuf>> {
-    let mut paths = fs::read_dir(dir)?
-        .map(|entry| entry.map(|entry| entry.path()))
-        .collect::<std::io::Result<Vec<_>>>()?;
-    paths.sort();
-    let mut files = Vec::new();
-    for path in paths {
-        if fs::metadata(&path)?.is_dir() {
-            if path.file_name().is_some_and(|name| name != "include") {
-                files.extend(collect(&path, suffix)?);
-            }
-        } else if path.to_str().is_some_and(|path| path.ends_with(suffix)) {
-            files.push(path);
-        }
-    }
-    Ok(files)
-}
+/// Bounds the cases a failure lists.
+const LIMIT_CASES: usize = 20;
 
 pub fn collect_excludes(dir: &Path) -> Result<BTreeSet<String>> {
     let mut excludes = BTreeSet::new();
@@ -88,109 +37,117 @@ pub fn collect_excludes(dir: &Path) -> Result<BTreeSet<String>> {
     Ok(excludes)
 }
 
-/// Collects per-test outcomes of one suite for comparison with its expected file.
-///
-/// The expected file is CSV without a header or quoting,
-/// one line `<outcome>,<path>...` per test.
-pub struct Results {
-    path_expected: PathBuf,
-    outcomes: BTreeMap<Vec<PathBuf>, Outcome>,
+/// Cases of one corpus, each a list of paths relative to the repository root,
+/// and the exclusion lists that skip some of them.
+pub struct Corpus {
+    cases: Vec<Vec<PathBuf>>,
+    excludes: BTreeSet<String>,
 }
 
-impl Results {
-    pub fn new(path_expected: &Path) -> Self {
-        Self { path_expected: path_expected.to_path_buf(), outcomes: BTreeMap::new() }
+impl Corpus {
+    /// Makes a corpus of the given cases.
+    pub fn new(cases: Vec<Vec<PathBuf>>) -> Self {
+        Self { cases, excludes: BTreeSet::new() }
     }
 
-    /// Records one test under its paths, which must be unique and CSV-safe.
-    pub fn record(&mut self, paths: &[&Path], outcome: Outcome) -> Result<()> {
-        for path in paths {
-            if !path
-                .to_str()
-                .is_some_and(|path| !path.contains([',', '"', '\r', '\n']))
-            {
-                return Err(Error::from(format!("invalid result path: {}", path.display())));
-            }
-        }
-        let key = paths.iter().map(|path| path.to_path_buf()).collect();
-        if self.outcomes.insert(key, outcome).is_some() {
-            return Err(Error::from(format!("duplicate result: {}", paths[0].display())));
-        }
-        Ok(())
+    /// Collects one case per file ending in `suffix` under `dir`.
+    pub fn files(dir: &str, suffix: &str) -> Result<Self> {
+        let root = root();
+        let cases = collect(&root.join(dir), suffix)?
+            .into_iter()
+            .map(|path| Ok(vec![path.strip_prefix(&root)?.to_path_buf()]))
+            .collect::<Result<_>>()?;
+        Ok(Self::new(cases))
     }
 
-    /// Compares each test's outcome with the expected file, printing mismatches to stderr.
+    /// Skips the cases with a path named by the `.exclude` files under `dirs`.
+    pub fn excludes(mut self, dirs: &[&str]) -> Result<Self> {
+        for dir in dirs {
+            self.excludes.extend(collect_excludes(&root().join(dir))?);
+        }
+        Ok(self)
+    }
+
+    /// Runs every case not excluded through `run_case`,
+    /// which gets the case's paths and answers its outcome and details.
     ///
-    /// A timeout matches any expected outcome with a warning.
-    /// Returns whether every test matched.
-    pub fn check(self) -> Result<bool> {
-        let display = self.path_expected.display();
-        let text = fs::read_to_string(&self.path_expected)
-            .map_err(|error| Error::from(format!("{display}: {error}")))?;
-        let mut expected = BTreeMap::new();
-        for (index, line) in text.lines().enumerate() {
-            let number = index + 1;
-            let mut fields = line.split(',');
-            let outcome = Outcome::from_name(fields.next().unwrap_or_default())
-                .map_err(|error| Error::from(format!("{display}:{number}: {error}")))?;
-            let paths = fields.map(PathBuf::from).collect::<Vec<_>>();
-            if paths.is_empty() {
-                return Err(Error::from(format!("{display}:{number}: no test paths")));
+    /// The interpreter's stdout is silenced meanwhile.
+    /// Each case's line goes to `logs/<name>.log` under the repository root
+    /// as soon as the case ends.
+    pub fn run(
+        &self,
+        name: &str,
+        mut run_case: impl FnMut(&[PathBuf]) -> Result<(Outcome, String)>,
+    ) -> Result<Report> {
+        // Open the log, replacing the previous run's
+        let dir_log = root().join("logs");
+        fs::create_dir_all(&dir_log)?;
+        let mut file_log = File::create(dir_log.join(format!("{name}.log")))?;
+        let mut report = Report { outcomes: Vec::new() };
+        let guard_stdout = SilenceStdout::new()?;
+        for paths in &self.cases {
+            let text_case = paths
+                .iter()
+                .map(|path| path.display().to_string())
+                .collect::<Vec<_>>()
+                .join(",");
+            // Record excluded cases without running them
+            if paths.iter().any(|path| {
+                path.to_str()
+                    .is_some_and(|path| self.excludes.contains(path))
+            }) {
+                writeln!(file_log, "exclude,{text_case},")?;
+                continue;
             }
-            if expected.insert(paths, (number, outcome)).is_some() {
-                return Err(Error::from(format!("{display}:{number}: duplicate test")));
-            }
+            // Run the case and log its outcome with its duration
+            let start = Instant::now();
+            let (outcome, details) = run_case(paths)?;
+            let secs = start.elapsed().as_secs_f64();
+            writeln!(file_log, "{},{text_case},{secs:.2}", outcome.name())?;
+            report.outcomes.push((text_case, outcome, details));
         }
-        let mut matched = true;
-        for (paths, outcome) in self.outcomes {
-            let text_paths = text_paths(&paths);
-            match expected.remove(&paths) {
-                None => {
-                    matched = false;
-                    eprintln!("{display}: {text_paths}: got {}, not expected", outcome.name());
-                }
-                Some((number, outcome_expected)) if outcome == Outcome::Timeout => {
-                    eprintln!(
-                        "warning: {display}:{number}: {text_paths}: timeout, expected {}",
-                        outcome_expected.name()
-                    );
-                }
-                Some((number, outcome_expected)) if outcome != outcome_expected => {
-                    matched = false;
-                    eprintln!(
-                        "{display}:{number}: {text_paths}: expected {}, got {}",
-                        outcome_expected.name(),
-                        outcome.name()
-                    );
-                }
-                Some(_) => {}
-            }
-        }
-        let mut unrun = expected.into_iter().collect::<Vec<_>>();
-        unrun.sort_by_key(|(_, (number, _))| *number);
-        for (paths, (number, outcome_expected)) in unrun {
-            matched = false;
-            eprintln!(
-                "{display}:{number}: {}: expected {}, not run",
-                text_paths(&paths),
-                outcome_expected.name()
-            );
-        }
-        Ok(matched)
+        guard_stdout.finish()?;
+        Ok(report)
     }
 }
 
-/// Joins test paths as in expected files.
-fn text_paths(paths: &[PathBuf]) -> String {
-    paths
-        .iter()
-        .map(|path| path.display().to_string())
-        .collect::<Vec<_>>()
-        .join(",")
+/// Outcomes of one corpus run, in corpus order.
+pub struct Report {
+    /// Each case run, with its outcome and failure details.
+    outcomes: Vec<(String, Outcome, String)>,
 }
 
-/// Creates a progress bar over `len` tests.
-pub fn progress_bar(len: usize) -> Result<ProgressBar> {
-    let style = ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")?;
-    Ok(ProgressBar::new(len as u64).with_style(style))
+impl Report {
+    /// Checks that every case run reaches `outcome`.
+    ///
+    /// A failure panics with the other cases, at most `LIMIT_CASES`,
+    /// each with its failure details.
+    pub fn check(&self, outcome: Outcome) {
+        // Collect the cases that ran to another outcome
+        let mismatches: Vec<_> = self
+            .outcomes
+            .iter()
+            .filter(|(_, other, _)| *other != outcome)
+            .collect();
+        if mismatches.is_empty() {
+            return;
+        }
+        // Panic with them, at most `LIMIT_CASES`, as the test's failure message
+        let mut text = format!(
+            "{} of {} cases did not {}",
+            mismatches.len(),
+            self.outcomes.len(),
+            outcome.name()
+        );
+        for (text_case, _, details) in mismatches.iter().take(LIMIT_CASES) {
+            text.push_str(&format!("\n{text_case}"));
+            for line_details in details.lines() {
+                text.push_str(&format!("\n    {line_details}"));
+            }
+        }
+        if mismatches.len() > LIMIT_CASES {
+            text.push_str(&format!("\nand {} more", mismatches.len() - LIMIT_CASES));
+        }
+        panic!("{text}");
+    }
 }

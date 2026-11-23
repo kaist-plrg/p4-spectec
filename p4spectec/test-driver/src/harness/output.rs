@@ -1,7 +1,7 @@
 //! Scoped stdout suppression during corpus execution
 //!
 //! Guards own process-wide redirection and must be used in lexical order.
-//! Finish suppression before checking expectations, whose diffs use stdout.
+//! Finish suppression before anything else prints.
 
 use std::{
     fs::File,
@@ -10,13 +10,13 @@ use std::{
 };
 
 /// Discards process stdout until explicitly restored or dropped.
-pub(crate) struct SilenceStdout {
+pub(super) struct SilenceStdout {
     fd_stdout: Option<OwnedFd>,
 }
 
 impl SilenceStdout {
     /// Saves stdout and redirects it to the null device.
-    pub(crate) fn new() -> io::Result<Self> {
+    pub(super) fn new() -> io::Result<Self> {
         io::stdout().flush()?;
         let fd_stdout = io::stdout().as_fd().try_clone_to_owned()?;
         let file_null = File::options().write(true).open("/dev/null")?;
@@ -25,7 +25,7 @@ impl SilenceStdout {
     }
 
     /// Restores stdout and reports flush or redirection failures.
-    pub(crate) fn finish(mut self) -> io::Result<()> {
+    pub(super) fn finish(mut self) -> io::Result<()> {
         self.restore()
     }
 
