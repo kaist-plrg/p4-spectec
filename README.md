@@ -181,6 +181,8 @@ make rustdoc      # API documentation
 make test         # every test (needs `cargo install --locked cargo-nextest`)
 ```
 
+[TESTING.md](TESTING.md) explains how to run tests, add a test, and update snapshots.
+
 | Test file (`p4spectec/test-driver/tests/`) | Checks |
 | --- | --- |
 | `speclang.rs` | the specification printed at each stage, and its AsciiDoc and LaTeX |
