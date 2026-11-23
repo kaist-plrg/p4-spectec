@@ -183,7 +183,7 @@ make test         # every test (needs `cargo install --locked cargo-nextest`)
 
 | Test file (`p4spectec/test-driver/tests/`) | Checks |
 | --- | --- |
-| `speclang.rs` | the specification printed at each stage, and its AsciiDoc |
+| `speclang.rs` | the specification printed at each stage, and its AsciiDoc and LaTeX |
 | `parse.rs`, `elab.rs`, `algo.rs`, `structure.rs`, `prose.rs` | errors and warnings of each conversion stage |
 | `specdoc.rs`, `splice.rs` | AsciiDoc rendering and splicing warnings and errors |
 | `run.rs` | P4 execution corpora and relation errors in AL, SL, PL |

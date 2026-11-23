@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use p4spectec::{
     diagnostic::{RenderConfig, Renderer},
     lang::traits::print::Print,
-    specdoc::adoc,
+    specdoc::{adoc, latex},
 };
 
 use p4spectec_test::harness;
@@ -66,6 +66,8 @@ enum Output {
     Prose,
     /// Renders each EL definition as a separate AsciiDoc block.
     AdocEl,
+    /// Renders each EL definition as a separate LaTeX block, without link destinations.
+    LatexEl,
     /// Renders the PL as AsciiDoc, requiring the same anchors on a second rendering.
     AdocPl,
 }
@@ -96,6 +98,18 @@ impl Output {
             Self::AdocEl => {
                 let spec_el = p4spectec::parse(spec()).unwrap_or_else(|report| panic!("{report}"));
                 let texts = spec_el.iter().map(adoc::el::render_def).collect::<Vec<_>>();
+                texts.join("\n\n")
+            }
+            Self::LatexEl => {
+                let spec_el = p4spectec::parse(spec()).unwrap_or_else(|report| panic!("{report}"));
+                let anchor_ctx = latex::AnchorContext::default();
+                let texts = spec_el
+                    .iter()
+                    .map(|def| {
+                        latex::render_def(&anchor_ctx, def)
+                            .unwrap_or_else(|report| panic!("{report}"))
+                    })
+                    .collect::<Vec<_>>();
                 texts.join("\n\n")
             }
             Self::AdocPl => {
@@ -183,6 +197,13 @@ const ADOC_EL: Suite = Suite { name: "adoc-el", output: Output::AdocEl };
 #[test]
 fn adoc_el() {
     ADOC_EL.check();
+}
+
+const LATEX_EL: Suite = Suite { name: "latex-el", output: Output::LatexEl };
+
+#[test]
+fn latex_el() {
+    LATEX_EL.check();
 }
 
 const ADOC_PL: Suite = Suite { name: "adoc-pl", output: Output::AdocPl };
