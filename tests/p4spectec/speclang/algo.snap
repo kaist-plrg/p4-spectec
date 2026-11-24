@@ -8500,6 +8500,7 @@ def $partition_parameterListIR(parameterIR*, nameIR*, nameIR*) : (parameterIR*, 
   -- let parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*} = parameterIR*{parameterIR <- parameterIR*}
   -- let (parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}) = $partition_parameterListIR(parameterIR_t*{parameterIR_t <- parameterIR_t*}, nameIR_default*{nameIR_default <- nameIR_default*}, nameIR_optional*{nameIR_optional <- nameIR_optional*})
   -- let _annotationList _direction _typeIR nameIR_h _parameterInitializerOptIR = parameterIR_h
+  -- if ~nameIR_h <- nameIR_default*{nameIR_default <- nameIR_default*}
   -- if nameIR_h <- nameIR_optional*{nameIR_optional <- nameIR_optional*}
 
   clause 3 : (parameterIR*{parameterIR <- parameterIR*}, nameIR_default*{nameIR_default <- nameIR_default*}, nameIR_optional*{nameIR_optional <- nameIR_optional*}) = (parameterIR_h :: parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*})
@@ -9111,37 +9112,35 @@ def $lift_baseTypeIR(baseTypeIR) : baseType? =
   -- let errorTypeIR = baseTypeIR as errorTypeIR
   -- if errorTypeIR matches ERROR
 
-  clause 2 : (baseTypeIR) = ?(ERROR)
-  -- if baseTypeIR <: errorTypeIR
-  -- let errorTypeIR = baseTypeIR as errorTypeIR
-  -- if errorTypeIR matches ERROR
-
-  clause 3 : (baseTypeIR) = ?(MATCH_KIND)
+  clause 2 : (baseTypeIR) = ?(MATCH_KIND)
   -- if baseTypeIR <: matchKindTypeIR
   -- let matchKindTypeIR = baseTypeIR as matchKindTypeIR
   -- if matchKindTypeIR matches MATCH_KIND
 
-  clause 4 : (baseTypeIR) = ?(STRING)
+  clause 3 : (baseTypeIR) = ?(STRING)
   -- if baseTypeIR <: stringTypeIR
   -- let stringTypeIR = baseTypeIR as stringTypeIR
   -- if stringTypeIR matches STRING
 
-  clause 5 : (baseTypeIR) = ?(INT)
+  clause 4 : (baseTypeIR) = ?(INT)
   -- if baseTypeIR <: intTypeIR
   -- let intTypeIR = baseTypeIR as intTypeIR
   -- if intTypeIR matches INT
 
-  clause 6 : (baseTypeIR) = ?(INT `< w as int `>)
+  clause 5 : (baseTypeIR) = ?(INT `< w as int `>)
   -- if baseTypeIR <: fixedIntTypeIR
   -- let INT `< w `> = baseTypeIR as fixedIntTypeIR
 
-  clause 7 : (baseTypeIR) = ?(BIT `< w as int `>)
+  clause 6 : (baseTypeIR) = ?(BIT `< w as int `>)
   -- if baseTypeIR <: fixedBitTypeIR
   -- let BIT `< w `> = baseTypeIR as fixedBitTypeIR
 
-  clause 8 : (baseTypeIR) = ?(VARBIT `< w as int `>)
+  clause 7 : (baseTypeIR) = ?(VARBIT `< w as int `>)
   -- if baseTypeIR <: varBitTypeIR
   -- let VARBIT `< w `> = baseTypeIR as varBitTypeIR
+
+  clause -1 : (baseTypeIR) = ?()
+  -- debug baseTypeIR
 
 def $lift_typeDefIR_as_typeName(typeDefIR) : typeName? =
 
@@ -10398,6 +10397,7 @@ def $lift_callStatementIR(callStatementIR) : callStatement? =
   -- let ?(argumentList) = argumentList'?{argumentList' <- argumentList'?}
 
   clause 1 : (callableTargetIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) ';') = ?(lvalue `< typeArgumentList `> `( argumentList `) ';')
+  -- if (typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} =/= [])
   -- let lvalue'?{lvalue' <- lvalue'?} = $lift_callableTargetIR_as_lvalue(callableTargetIR)
   -- if lvalue'?{lvalue' <- lvalue'?} matches (_)
   -- let ?(lvalue) = lvalue'?{lvalue' <- lvalue'?}
@@ -16743,7 +16743,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- let ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
-    -- if ~typeIR_r_reduced <: fixedBitTypeIR
+    -- if ~$unroll_typeIR(typeIR_r_reduced) <: fixedBitTypeIR
     -- if (ctk_r_reduced = LCTK)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~> value
     -- if value <: integerValue

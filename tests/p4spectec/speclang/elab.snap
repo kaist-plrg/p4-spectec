@@ -5677,6 +5677,7 @@ def $partition_parameterListIR(parameterIR*, nameIR*, nameIR*) : (parameterIR*, 
   clause 2 : (parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*}, nameIR_default*{nameIR_default <- nameIR_default*}, nameIR_optional*{nameIR_optional <- nameIR_optional*}) = (parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, parameterIR_h :: parameterIR_optional*{parameterIR_optional <- parameterIR_optional*})
   -- if ((parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}) = $partition_parameterListIR(parameterIR_t*{parameterIR_t <- parameterIR_t*}, nameIR_default*{nameIR_default <- nameIR_default*}, nameIR_optional*{nameIR_optional <- nameIR_optional*}))
   -- if (_annotationList _direction _typeIR nameIR_h _parameterInitializerOptIR = parameterIR_h)
+  -- if ~nameIR_h <- nameIR_default*{nameIR_default <- nameIR_default*}
   -- if nameIR_h <- nameIR_optional*{nameIR_optional <- nameIR_optional*}
 
   clause 3 : (parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*}, nameIR_default*{nameIR_default <- nameIR_default*}, nameIR_optional*{nameIR_optional <- nameIR_optional*}) = (parameterIR_h :: parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*})
@@ -6089,19 +6090,20 @@ def $lift_baseTypeIR(baseTypeIR) : baseType? =
 
   clause 1 : (ERROR as baseTypeIR) = ?(ERROR)
 
-  clause 2 : (ERROR as baseTypeIR) = ?(ERROR)
+  clause 2 : (MATCH_KIND as baseTypeIR) = ?(MATCH_KIND)
 
-  clause 3 : (MATCH_KIND as baseTypeIR) = ?(MATCH_KIND)
+  clause 3 : (STRING as baseTypeIR) = ?(STRING)
 
-  clause 4 : (STRING as baseTypeIR) = ?(STRING)
+  clause 4 : (INT as baseTypeIR) = ?(INT)
 
-  clause 5 : (INT as baseTypeIR) = ?(INT)
+  clause 5 : (INT `< w `> as baseTypeIR) = ?(INT `< w as int `>)
 
-  clause 6 : (INT `< w `> as baseTypeIR) = ?(INT `< w as int `>)
+  clause 6 : (BIT `< w `> as baseTypeIR) = ?(BIT `< w as int `>)
 
-  clause 7 : (BIT `< w `> as baseTypeIR) = ?(BIT `< w as int `>)
+  clause 7 : (VARBIT `< w `> as baseTypeIR) = ?(VARBIT `< w as int `>)
 
-  clause 8 : (VARBIT `< w `> as baseTypeIR) = ?(VARBIT `< w as int `>)
+  clause -1 : (baseTypeIR) = ?()
+  -- debug baseTypeIR
 
 def $lift_typeDefIR_as_typeName(typeDefIR) : typeName? =
 
@@ -6798,6 +6800,7 @@ def $lift_callStatementIR(callStatementIR) : callStatement? =
   -- if (?(argumentList) = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*}))
 
   clause 1 : (callableTargetIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) ';') = ?(lvalue `< typeArgumentList `> `( argumentList `) ';')
+  -- if (typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} =/= [])
   -- if (?(lvalue) = $lift_callableTargetIR_as_lvalue(callableTargetIR))
   -- if (?(typeArgumentList) = $lift_typeArgumentListIR(typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}))
   -- if (?(argumentList) = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*}))
@@ -9942,7 +9945,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
     -- if (typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced))
     -- if (ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
-    -- if ~typeIR_r_reduced <: fixedBitTypeIR
+    -- if ~$unroll_typeIR(typeIR_r_reduced) <: fixedBitTypeIR
     -- if (ctk_r_reduced = LCTK)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~> integerValue_r as value
     -- if (i_r = $int_of_integerValue(integerValue_r))

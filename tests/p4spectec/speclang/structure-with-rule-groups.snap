@@ -11932,17 +11932,15 @@ def $partition_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, nameIR
 
             2. Case false
 
-              1. If (~nameIR_h <- nameIR'*{nameIR' <- nameIR'*}), then
+              1. Case analysis on nameIR_h <- nameIR'*{nameIR' <- nameIR'*} (total)
 
-                1. Return (parameterIR_h :: parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*})
+                1. Case true
 
-              1. Else Dangling
+                  1. Return (parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, parameterIR_h :: parameterIR_optional*{parameterIR_optional <- parameterIR_optional*})
 
-          2. If (nameIR_h <- nameIR'*{nameIR' <- nameIR'*}), then
+                2. Case false
 
-            1. Return (parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, parameterIR_h :: parameterIR_optional*{parameterIR_optional <- parameterIR_optional*})
-
-          2. Else Dangling
+                  1. Return (parameterIR_h :: parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*})
 
 syntax callAlign =
    | GIVEN parameterIR* DEFAULT parameterIR* OPTIONAL parameterIR* (from callAlign)
@@ -12830,8 +12828,6 @@ def $lift_baseTypeIR(baseTypeIR)
 
       1. Return ?(ERROR)
 
-      2. Return ?(ERROR)
-
   3. Case (% has type matchKindTypeIR)
 
     1. (Let matchKindTypeIR be baseTypeIR as matchKindTypeIR)
@@ -12868,7 +12864,11 @@ def $lift_baseTypeIR(baseTypeIR)
 
       1. Return ?(VARBIT `< w as int `>)
 
-1. Else Dangling
+2. Otherwise,
+
+  1. Debug: baseTypeIR
+
+  2. Return ?()
 
 def $lift_typeDefIR_as_typeName(typeDefIR)
 
@@ -15162,53 +15162,55 @@ def $lift_callableTargetIR_as_lvalue(callableTargetIR')
 
 def $lift_callStatementIR(callableTargetIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) ';')
 
-1. If (typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []), then
+1. Case analysis on typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} (total)
 
-  1. (Let lvalue'?{lvalue' <- lvalue'?} be $lift_callableTargetIR_as_lvalue(callableTargetIR))
+  1. Case (% matches pattern [])
 
-    1. If (lvalue'?{lvalue' <- lvalue'?} matches (_)), then
+    1. (Let lvalue'?{lvalue' <- lvalue'?} be $lift_callableTargetIR_as_lvalue(callableTargetIR))
 
-      1. (Let ?(lvalue) be lvalue'?{lvalue' <- lvalue'?})
+      1. If (lvalue'?{lvalue' <- lvalue'?} matches (_)), then
 
-        1. (Let argumentList'?{argumentList' <- argumentList'?} be $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*}))
+        1. (Let ?(lvalue) be lvalue'?{lvalue' <- lvalue'?})
 
-          1. If (argumentList'?{argumentList' <- argumentList'?} matches (_)), then
+          1. (Let argumentList'?{argumentList' <- argumentList'?} be $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*}))
 
-            1. (Let ?(argumentList) be argumentList'?{argumentList' <- argumentList'?})
+            1. If (argumentList'?{argumentList' <- argumentList'?} matches (_)), then
 
-              1. Return ?(lvalue `( argumentList `) ';')
+              1. (Let ?(argumentList) be argumentList'?{argumentList' <- argumentList'?})
 
-          1. Else Dangling
+                1. Return ?(lvalue `( argumentList `) ';')
 
-    1. Else Dangling
+            1. Else Dangling
 
-1. Else Dangling
+      1. Else Dangling
 
-2. (Let lvalue'?{lvalue' <- lvalue'?} be $lift_callableTargetIR_as_lvalue(callableTargetIR))
+  2. Case (% matches pattern _ :: _)
 
-  1. If (lvalue'?{lvalue' <- lvalue'?} matches (_)), then
+    1. (Let lvalue'?{lvalue' <- lvalue'?} be $lift_callableTargetIR_as_lvalue(callableTargetIR))
 
-    1. (Let ?(lvalue) be lvalue'?{lvalue' <- lvalue'?})
+      1. If (lvalue'?{lvalue' <- lvalue'?} matches (_)), then
 
-      1. (Let typeArgumentList'?{typeArgumentList' <- typeArgumentList'?} be $lift_typeArgumentListIR(typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}))
+        1. (Let ?(lvalue) be lvalue'?{lvalue' <- lvalue'?})
 
-        1. If (typeArgumentList'?{typeArgumentList' <- typeArgumentList'?} matches (_)), then
+          1. (Let typeArgumentList'?{typeArgumentList' <- typeArgumentList'?} be $lift_typeArgumentListIR(typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}))
 
-          1. (Let ?(typeArgumentList) be typeArgumentList'?{typeArgumentList' <- typeArgumentList'?})
+            1. If (typeArgumentList'?{typeArgumentList' <- typeArgumentList'?} matches (_)), then
 
-            1. (Let argumentList'?{argumentList' <- argumentList'?} be $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*}))
+              1. (Let ?(typeArgumentList) be typeArgumentList'?{typeArgumentList' <- typeArgumentList'?})
 
-              1. If (argumentList'?{argumentList' <- argumentList'?} matches (_)), then
+                1. (Let argumentList'?{argumentList' <- argumentList'?} be $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*}))
 
-                1. (Let ?(argumentList) be argumentList'?{argumentList' <- argumentList'?})
+                  1. If (argumentList'?{argumentList' <- argumentList'?} matches (_)), then
 
-                  1. Return ?(lvalue `< typeArgumentList `> `( argumentList `) ';')
+                    1. (Let ?(argumentList) be argumentList'?{argumentList' <- argumentList'?})
 
-              1. Else Dangling
+                      1. Return ?(lvalue `< typeArgumentList `> `( argumentList `) ';')
 
-        1. Else Dangling
+                  1. Else Dangling
 
-  1. Else Dangling
+            1. Else Dangling
+
+      1. Else Dangling
 
 def $lift_directApplicationStatementIR(constructorTargetIR '.' APPLY `( argumentIR*{argumentIR <- argumentIR*} `) ';')
 
@@ -24071,7 +24073,7 @@ relation Expr_ok: p TC |- expression'' : %
 
                               1. Else Dangling
 
-                            2. If (~typeIR_r_reduced <: fixedBitTypeIR), then
+                            2. If (~$unroll_typeIR(typeIR_r_reduced) <: fixedBitTypeIR), then
 
                               1. If (ctk_r_reduced matches LCTK), then
 

@@ -10640,29 +10640,23 @@ def $partition_parameterListIR((parameterIR)*{parameterIR <- parameterIR*}, (nam
 
     3. (Destruct (_annotationList, _direction, _typeIR, nameIR_h, _parameterInitializerOptIR) = parameterIR_h)
 
-    4. Block (2 arms)
+    4. Case analysis on nameIR_h is in (nameIR)*{nameIR <- nameIR*} (total)
 
-    Arm 1:
+      1. Case true
 
-      1. Case analysis on nameIR_h is in (nameIR)*{nameIR <- nameIR*} (total)
+        1. Return ((parameterIR_given)*{parameterIR_given <- parameterIR_given*}, parameterIR_h :: (parameterIR_default)*{parameterIR_default <- parameterIR_default*}, (parameterIR_optional)*{parameterIR_optional <- parameterIR_optional*})
 
-        1. Case true
+      2. Case false
 
-          1. Return ((parameterIR_given)*{parameterIR_given <- parameterIR_given*}, parameterIR_h :: (parameterIR_default)*{parameterIR_default <- parameterIR_default*}, (parameterIR_optional)*{parameterIR_optional <- parameterIR_optional*})
+        1. Case analysis on nameIR_h is in (nameIR')*{nameIR' <- nameIR'*} (total)
 
-        2. Case false
+          1. Case true
 
-          1. If (~nameIR_h is in (nameIR')*{nameIR' <- nameIR'*}), then
+            1. Return ((parameterIR_given)*{parameterIR_given <- parameterIR_given*}, (parameterIR_default)*{parameterIR_default <- parameterIR_default*}, parameterIR_h :: (parameterIR_optional)*{parameterIR_optional <- parameterIR_optional*})
+
+          2. Case false
 
             1. Return (parameterIR_h :: (parameterIR_given)*{parameterIR_given <- parameterIR_given*}, (parameterIR_default)*{parameterIR_default <- parameterIR_default*}, (parameterIR_optional)*{parameterIR_optional <- parameterIR_optional*})
-
-          1. Else Dangling
-
-    Arm 2:
-
-      1. Check (nameIR_h is in (nameIR')*{nameIR' <- nameIR'*})
-
-        1. Return ((parameterIR_given)*{parameterIR_given <- parameterIR_given*}, (parameterIR_default)*{parameterIR_default <- parameterIR_default*}, parameterIR_h :: (parameterIR_optional)*{parameterIR_optional <- parameterIR_optional*})
 
 syntax callAlign =
    | GIVEN parameterIR* DEFAULT parameterIR* OPTIONAL parameterIR* (from callAlign)
@@ -11574,15 +11568,7 @@ def $lift_baseTypeIR(baseTypeIR)
 
   2. Case (% has type errorTypeIR, let errorTypeIR = %)
 
-    1. Block (2 arms)
-
-    Arm 1:
-
-      1. Return ?((ERROR))
-
-    Arm 2:
-
-      1. Return ?((ERROR))
+    1. Return ?((ERROR))
 
   3. Case (% has type matchKindTypeIR, let matchKindTypeIR = %)
 
@@ -11608,7 +11594,11 @@ def $lift_baseTypeIR(baseTypeIR)
 
     1. Return ?((VARBIT `< (w as int) `>))
 
-1. Else Dangling
+2. Otherwise,
+
+  1. Debug: baseTypeIR
+
+  2. Return ?()
 
 def $lift_typeDefIR_as_typeName(typeDefIR)
 
@@ -13598,45 +13588,15 @@ Arm 2:
 
 def $lift_callStatementIR((callableTargetIR `< (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} `> `( (argumentIR)*{argumentIR <- argumentIR*} `) ';'))
 
-1. Block (2 arms)
+1. Case analysis on (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} (total)
 
-Arm 1:
+  1. Case (% matches pattern [])
 
-  1. If (((typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} matches pattern [])), then
+    1. (Let (lvalue')?{lvalue' <- lvalue'?} be $lift_callableTargetIR_as_lvalue(callableTargetIR)) [FAIL]
 
-    1. (Let (lvalue')?{lvalue' <- lvalue'?} be $lift_callableTargetIR_as_lvalue(callableTargetIR)) [→ next]
-
-    2. If (((lvalue')?{lvalue' <- lvalue'?} matches pattern (_))), then
+    2. Check (((lvalue')?{lvalue' <- lvalue'?} matches pattern (_)))
 
       1. (Let ?(lvalue) be (lvalue')?{lvalue' <- lvalue'?})
-
-      2. (Let (argumentList')?{argumentList' <- argumentList'?} be $lift_argumentListIR((argumentIR)*{argumentIR <- argumentIR*})) [→ next]
-
-      3. If (((argumentList')?{argumentList' <- argumentList'?} matches pattern (_))), then
-
-        1. (Let ?(argumentList) be (argumentList')?{argumentList' <- argumentList'?})
-
-        2. Return ?((lvalue `( argumentList `) ';'))
-
-      3. Else Dangling
-
-    2. Else Dangling
-
-  1. Else Dangling
-
-Arm 2:
-
-  1. (Let (lvalue')?{lvalue' <- lvalue'?} be $lift_callableTargetIR_as_lvalue(callableTargetIR)) [FAIL]
-
-  2. Check (((lvalue')?{lvalue' <- lvalue'?} matches pattern (_)))
-
-    1. (Let ?(lvalue) be (lvalue')?{lvalue' <- lvalue'?})
-
-    2. (Let (typeArgumentList')?{typeArgumentList' <- typeArgumentList'?} be $lift_typeArgumentListIR((typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*})) [FAIL]
-
-    3. Check (((typeArgumentList')?{typeArgumentList' <- typeArgumentList'?} matches pattern (_)))
-
-      1. (Let ?(typeArgumentList) be (typeArgumentList')?{typeArgumentList' <- typeArgumentList'?})
 
       2. (Let (argumentList')?{argumentList' <- argumentList'?} be $lift_argumentListIR((argumentIR)*{argumentIR <- argumentIR*})) [FAIL]
 
@@ -13644,7 +13604,29 @@ Arm 2:
 
         1. (Let ?(argumentList) be (argumentList')?{argumentList' <- argumentList'?})
 
-        2. Return ?((lvalue `< typeArgumentList `> `( argumentList `) ';'))
+        2. Return ?((lvalue `( argumentList `) ';'))
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let (lvalue')?{lvalue' <- lvalue'?} be $lift_callableTargetIR_as_lvalue(callableTargetIR)) [FAIL]
+
+    2. Check (((lvalue')?{lvalue' <- lvalue'?} matches pattern (_)))
+
+      1. (Let ?(lvalue) be (lvalue')?{lvalue' <- lvalue'?})
+
+      2. (Let (typeArgumentList')?{typeArgumentList' <- typeArgumentList'?} be $lift_typeArgumentListIR((typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*})) [FAIL]
+
+      3. Check (((typeArgumentList')?{typeArgumentList' <- typeArgumentList'?} matches pattern (_)))
+
+        1. (Let ?(typeArgumentList) be (typeArgumentList')?{typeArgumentList' <- typeArgumentList'?})
+
+        2. (Let (argumentList')?{argumentList' <- argumentList'?} be $lift_argumentListIR((argumentIR)*{argumentIR <- argumentIR*})) [FAIL]
+
+        3. Check (((argumentList')?{argumentList' <- argumentList'?} matches pattern (_)))
+
+          1. (Let ?(argumentList) be (argumentList')?{argumentList' <- argumentList'?})
+
+          2. Return ?((lvalue `< typeArgumentList `> `( argumentList `) ';'))
 
 def $lift_directApplicationStatementIR((constructorTargetIR '.' APPLY `( (argumentIR)*{argumentIR <- argumentIR*} `) ';'))
 
@@ -21679,7 +21661,7 @@ Arm 3:
 
               Arm 2:
 
-                1. If (~(typeIR_r_reduced has type fixedBitTypeIR)), then
+                1. If (~($unroll_typeIR(typeIR_r_reduced) has type fixedBitTypeIR)), then [→ group binaryExpression-equality]
 
                   1. If ((ctk_r_reduced matches pattern LCTK)), then
 
