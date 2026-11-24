@@ -33244,7 +33244,7 @@ syntax storageReference =
    | storageReference `[ value sliceop value `] (from storageReference)
 
 syntax actionDef =
-   | annotationList ACTION nameIR `( parameterListIR `) blockStatementIR (from actionDef)
+   | annotationList ACTION nameIR nameIR `( parameterListIR `) blockStatementIR (from actionDef)
 
 syntax definedFunctionDef =
    | FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR `) blockStatementIR (from definedFunctionDef)
@@ -33277,7 +33277,7 @@ syntax methodDef =
    | TABLE_APPLY `{ tablePropertyListIR `} (from tableApplyMethodDef)
 
 syntax callableDef =
-   | annotationList ACTION nameIR `( parameterListIR `) blockStatementIR (from actionDef)
+   | annotationList ACTION nameIR nameIR `( parameterListIR `) blockStatementIR (from actionDef)
    | FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR `) blockStatementIR (from definedFunctionDef)
    | EXTERN_FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR `) (from externFunctionDef)
    | EXTERN_METHOD nameIR `< typeParameterListIR `> `( parameterListIR `) blockStatementIR? (from externMethodDef)
@@ -33308,7 +33308,7 @@ def $parameterListIR_of_callableDef(callableDef)
 
       1. Return $parameterListIR_of_methodDef(methodDef)
 
-def $parameterListIR_of_actionDef(annotationList ACTION _nameIR `( parameterListIR `) _blockStatementIR)
+def $parameterListIR_of_actionDef(annotationList ACTION _nameIR _nameIR' `( parameterListIR `) _blockStatementIR)
 
 1. Return parameterListIR
 
@@ -33584,9 +33584,13 @@ def $empty_store
 
 def $add_store(store, objectId, object)
 
-1. (Let store' be $add_map<objectId, object>(store, objectId, object))
+1. If (~$in_set<objectId>(objectId, $dom_map<objectId, object>(store))), then
 
-  1. Return store'
+  1. (Let store' be $add_map<objectId, object>(store, objectId, object))
+
+    1. Return store'
+
+1. Else Dangling
 
 def $find_store(store, objectId)
 
@@ -34674,7 +34678,7 @@ relation DirectApplicationStmt_inst: p IC STO_0 |- constructorTargetIR '.' APPLY
 
               1. (Let nameIR be $concat_text([typeId, "_", typeId_fresh]))
 
-                1. (Let objectId be IC.PATH ++ [typeId])
+                1. (Let objectId be IC.PATH ++ [nameIR])
 
                   1. (Let STO_2 be $add_store(STO_1, objectId, object))
 
@@ -35196,55 +35200,19 @@ relation TableAction_inst: IC STO |- annotationList tableActionReferenceIR '#' `
 
     1. If ((cursor, callableId, callableDef)?{(cursor, callableId, callableDef) <- (cursor, callableId, callableDef)?} matches (_)), then
 
-      1. (Let ?((cursor, _callableId, callableDef)) be (cursor, callableId, callableDef)?{(cursor, callableId, callableDef) <- (cursor, callableId, callableDef)?})
+      1. (Let ?((_p, _callableId, callableDef)) be (cursor, callableId, callableDef)?{(cursor, callableId, callableDef) <- (cursor, callableId, callableDef)?})
 
         1. If (callableDef <: actionDef), then
 
           1. (Let actionDef be callableDef as actionDef)
 
-            1. (Let annotationList_actionDef ACTION nameIR `( _parameterListIR `) _blockStatementIR be actionDef)
+            1. (Let _annotationList ACTION _nameIR nameIR_controlPlane `( _parameterListIR `) _blockStatementIR be actionDef)
 
-              1. (Let nameIR'*{nameIR' <- nameIR'*} be $name_annotation(annotationList_actionDef))
+              1. (Let tableActionReferenceIR' be prefixedNameIR ?(nameIR_controlPlane) `( argumentListIR `))
 
-                1. If (nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]), then
+                1. (Let tableActionIR be annotationList tableActionReferenceIR' '#' `( parameterListIR ',' parameterListIR_control `) ';')
 
-                  1. (Let [nameIR_anno] be nameIR'*{nameIR' <- nameIR'*})
-
-                    1. Case analysis on $starts_with(nameIR_anno, ".") (total)
-
-                      1. Case true
-
-                        1. (Let controlPlaneNameIR be ?($strip_prefix(nameIR_anno, ".")))
-
-                          1. (Let tableActionReferenceIR' be prefixedNameIR controlPlaneNameIR `( argumentListIR `))
-
-                            1. (Let tableActionIR be annotationList tableActionReferenceIR' '#' `( parameterListIR ',' parameterListIR_control `) ';')
-
-                              1. Result in: % % |- % : STO tableActionIR
-
-                      2. Case false
-
-                        1. (Let controlPlaneNameIR be $ite<controlPlaneNameIR>((cursor = GLOBAL), ?(nameIR_anno), ?($join_text(IC.PATH ++ [nameIR_anno], "."))))
-
-                          1. (Let tableActionReferenceIR' be prefixedNameIR controlPlaneNameIR `( argumentListIR `))
-
-                            1. (Let tableActionIR be annotationList tableActionReferenceIR' '#' `( parameterListIR ',' parameterListIR_control `) ';')
-
-                              1. Result in: % % |- % : STO tableActionIR
-
-                1. Else Dangling
-
-              2. If ($name_annotation(annotationList_actionDef) matches []), then
-
-                1. (Let controlPlaneNameIR be $ite<controlPlaneNameIR>((cursor = GLOBAL), ?(nameIR), ?($join_text(IC.PATH ++ [nameIR], "."))))
-
-                  1. (Let tableActionReferenceIR' be prefixedNameIR controlPlaneNameIR `( argumentListIR `))
-
-                    1. (Let tableActionIR be annotationList tableActionReferenceIR' '#' `( parameterListIR ',' parameterListIR_control `) ';')
-
-                      1. Result in: % % |- % : STO tableActionIR
-
-              2. Else Dangling
+                  1. Result in: % % |- % : STO tableActionIR
 
         1. Else Dangling
 
@@ -35382,61 +35350,35 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
     1. (Let annotationList TABLE typeIR nameIR `{ tablePropertyListIR `} be controlLocalDeclarationIR as tableDeclarationIR)
 
-      1. (Let IC_callee_0 be $inherit_i(BLOCK, IC_0))
+      1. (Let objectId be $objectId_of_table(IC_0.PATH, annotationList, nameIR))
 
-        1. (Let IC_frame be $enter_i(IC_callee_0))
+        1. (Let IC_callee_0 be $inherit_i(BLOCK, IC_0))
 
-          1. (TableProperties_inst: IC_frame STO |- tablePropertyListIR : STO_1 tablePropertyListIR_inst)
+          1. (Let IC_callee_1 be IC_callee_0[PATH = objectId])
 
-            1. (Let TBL be $init_table(tablePropertyListIR_inst))
+            1. (Let IC_frame be $enter_i(IC_callee_1))
 
-              1. (Let frame'*{frame' <- frame'*} be IC_frame.LOCAL.FRAMES)
+              1. (TableProperties_inst: IC_frame STO |- tablePropertyListIR : STO_1 tablePropertyListIR_inst)
 
-                1. If (frame'*{frame' <- frame'*} matches _ :: _), then
+                1. (Let TBL be $init_table(tablePropertyListIR_inst))
 
-                  1. (Let frame :: _frame*{_frame <- _frame*} be frame'*{frame' <- frame'*})
+                  1. (Let frame'*{frame' <- frame'*} be IC_frame.LOCAL.FRAMES)
 
-                    1. (Let object_table be TABLE nameIR `{ frame TBL `} as object)
+                    1. If (frame'*{frame' <- frame'*} matches _ :: _), then
 
-                      1. (Let nameIR_object be $name_annotation_default(annotationList, nameIR))
+                      1. (Let frame :: _frame*{_frame <- _frame*} be frame'*{frame' <- frame'*})
 
-                        1. (Let objectId be IC_0.PATH ++ [nameIR_object])
-
-                          1. (Let STO_2 be $add_store(STO_1, objectId, object_table))
-
-                            1. If ($name_annotation(annotationList) matches []), then
-
-                              1. (Let IC_1 be $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
-
-                                1. (Let constantDeclarationIR be _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
-
-                                  1. Result in: % % |- % : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
-
-                            1. Else Dangling
-
-                        2. (Let objectId be $qualify_objectId(IC_0.PATH, nameIR_object))
+                        1. (Let object_table be TABLE nameIR `{ frame TBL `} as object)
 
                           1. (Let STO_2 be $add_store(STO_1, objectId, object_table))
 
-                            1. (Let nameIR'*{nameIR' <- nameIR'*} be $name_annotation(annotationList))
+                            1. (Let IC_1 be $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
 
-                              1. If (nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]), then
+                              1. (Let constantDeclarationIR be _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
 
-                                1. (Let [nameIR_annotation] be nameIR'*{nameIR' <- nameIR'*})
+                                1. Result in: % % |- % : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
 
-                                  1. (Let objectId_annotation be $qualify_objectId(IC_0.PATH, nameIR_annotation))
-
-                                    1. (Let STO_3 be $add_store(STO_2, objectId_annotation, object_table))
-
-                                      1. (Let IC_1 be $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
-
-                                        1. (Let constantDeclarationIR be _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
-
-                                          1. Result in: % % |- % : IC_1 STO_3 ?(constantDeclarationIR as controlLocalDeclarationIR)
-
-                              1. Else Dangling
-
-                1. Else Dangling
+                    1. Else Dangling
 
 relation ControlLocalDecls_inst: IC STO |- controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} : % % %
 
@@ -35546,13 +35488,15 @@ relation FuncDecl_inst: p IC_0 |- annotationList typeIR nameIR `< typeParameterL
 
 relation ActionDecl_inst: p IC_0 |- annotationList ACTION nameIR `( parameterListIR `) blockStatementIR : %
 
-1. (Let callableId be $callableId_IR(nameIR, parameterListIR))
+1. (Let nameIR_controlPlane be $controlPlaneName_of_action(IC_0.PATH, annotationList, nameIR))
 
-  1. (Let actionDef be annotationList ACTION nameIR `( parameterListIR `) blockStatementIR)
+  1. (Let callableId be $callableId_IR(nameIR, parameterListIR))
 
-    1. (Let IC_1 be $add_callableDef_non_overload_i(p, IC_0, callableId, actionDef as callableDef))
+    1. (Let actionDef be annotationList ACTION nameIR nameIR_controlPlane `( parameterListIR `) blockStatementIR)
 
-      1. Result in: % % |- % : IC_1
+      1. (Let IC_1 be $add_callableDef_non_overload_i(p, IC_0, callableId, actionDef as callableDef))
+
+        1. Result in: % % |- % : IC_1
 
 relation Decl_inst: IC_0 STO |- declarationIR : % %
 
@@ -36376,6 +36320,12 @@ relation ObjectDecls_inst: IC STO |- objectDeclarationIR*{objectDeclarationIR <-
 
           1. Result in: % % |- % : IC_2 STO_2
 
+def $controlPlaneName_of_action(objectId, annotationList, nameIR)
+
+1. (Let nameIR_local be $name_annotation_default(annotationList, nameIR))
+
+  1. Return $join_text($qualify_objectId(objectId, nameIR_local), ".")
+
 def $callableId_of_externMethodPrototypeIR(externMethodPrototypeIR)
 
 1. Case analysis on externMethodPrototypeIR (total)
@@ -36403,6 +36353,12 @@ def $constructor_of_externConstructorPrototypeIR(typeParameterListIR_expl, exter
   1. (Let constructorDef be EXTERN nameIR `< typeParameterListIR `> `( parameterIR*{parameterIR <- parameterIR*} `) `{ externMethodPrototypeListIR `} as constructorDef)
 
     1. Return constructorDef
+
+def $objectId_of_table(objectId, annotationList, nameIR)
+
+1. (Let nameIR_local be $name_annotation_default(annotationList, nameIR))
+
+  1. Return $qualify_objectId(objectId, nameIR_local)
 
 def $init_table(tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
 
@@ -40013,7 +39969,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
               1. (Let (p_ref, actionDef) be (cursor, callableDef) as (cursor, actionDef))
 
-                1. (Let _annotationList ACTION nameIR `( parameterListIR `) blockStatementIR be actionDef)
+                1. (Let _annotationList ACTION nameIR _nameIR' `( parameterListIR `) blockStatementIR be actionDef)
 
                   1. (Let actionCallee be ACTION p_ref '.' nameIR `( parameterListIR '#' id_default*{id_default <- id_default*} `) blockStatementIR)
 

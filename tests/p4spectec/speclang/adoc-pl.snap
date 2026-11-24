@@ -16999,7 +16999,7 @@ xref:parameterListIR_of_callableDef[$parameterListIR_of_callableDef(callableDef)
  .. Let ``methodDef`` be ``callableDef``.
  .. Return xref:parameterListIR_of_methodDef[``$parameterListIR_of_methodDef(methodDef)``].+++<sub class="bk-mark">[FAIL]</sub>+++
 
-xref:parameterListIR_of_actionDef[$parameterListIR_of_actionDef(annotationList +ACTION+ ++_++ +`(+ parameterListIR +`)+ ++_++)]
+xref:parameterListIR_of_actionDef[$parameterListIR_of_actionDef(annotationList +ACTION+ ++_++ ++_++ +`(+ parameterListIR +`)+ ++_++)]
 
 . Return ``parameterListIR``.
 
@@ -17083,6 +17083,7 @@ xref:empty_store[An empty store]
 
 xref:add_store[``store`` where ``objectId`` to ``object`` is added]
 
+. Check that ``~``xref:in_set[``$in_set<objectId>(objectId,`` ``$dom_map<objectId,`` ``object>(store))``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``store'`` be xref:add_map[``store`` where ``objectId`` to ``object`` is added].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Return ``store'``.
 
@@ -17639,7 +17640,7 @@ xref:DirectApplicationStmt_inst[Compile-time evaluation of ``constructorTargetIR
 . Let ``typeId~fresh~`` be xref:fresh_typeId[a fresh type variable].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``typeIR`` be ``{nbsp}~NAME~`` ``typeId``.
 . Let ``nameIR`` be <<concat_text,the concatenation of ``+[+`` ``typeId,`` ``"_",`` ``typeId~fresh~`` ``+]+``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
-. Let ``objectId`` be ``IC.+PATH+`` concatenated with ``typeId``.
+. Let ``objectId`` be ``IC.+PATH+`` concatenated with ``nameIR``.
 . Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object`` is added].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``constantDeclarationIR`` be ``{nbsp}~EMPTY~`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+'='+`` ``{nbsp}~VALUE~`` ``+REF+`` ``objectId`` ``+';'+``.
 . Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``{nbsp}~BARE~`` ``nameIR`` annotated with a pair of type ``typeIR`` and compile-time known-ness ``+CTK+``].
@@ -18059,33 +18060,13 @@ xref:TableAction_inst[Compile-time evaluation of ``annotationList`` ``tableActio
 . Let ``prefixedNameIR`` ``++_++`` ``+`(+`` ``argumentListIR`` ``+`)+`` be ``tableActionReferenceIR``.
 . Let ``(cursor,`` ``callableId,`` ``callableDef)^?^`` be xref:find_callableDef_non_overload_i[the non-overloaded callable definition of ``prefixedNameIR`` from the ``+LOCAL+`` layer of ``IC``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Check that ``(cursor,`` ``callableId,`` ``callableDef)^?^`` is defined.
-. Let ``(`` ``cursor,`` ``++_++,`` ``callableDef`` ``)`` be ``(cursor,`` ``callableId,`` ``callableDef)^?^``.
+. Let ``(`` ``++_++,`` ``++_++,`` ``callableDef`` ``)`` be ``(cursor,`` ``callableId,`` ``callableDef)^?^``.
 . Check that ``callableDef`` has type ``actionDef``.
 . Let ``actionDef`` be ``callableDef``.
-. Let ``annotationList~actionDef~`` ``+ACTION+`` ``nameIR`` ``+`(+`` ``++_++`` ``+`)+`` ``++_++`` be ``actionDef``.
-. +++<span class="bk-arm-anchor" id="bk-170-arm-1"></span>+++Try:
- .. Let ``nameIR'^{asterisk}^`` be xref:name_annotation[``$name_annotation(annotationList~actionDef~)``].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 9</a>]</sub>+++
- .. If ``nameIR'^{asterisk}^`` is a list of length 1:
-  ... Let ``nameIR~anno~`` be ``nameIR'^{asterisk}^``.
-  ... If xref:starts_with[the text ``nameIR~anno~`` starts with ``"."``]:+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 9</a>]</sub>+++
-   .... Let ``text`` be xref:strip_prefix[the text ``nameIR~anno~`` with the prefix ``"."`` removed].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 9</a>]</sub>+++
-   .... Let ``controlPlaneNameIR`` be ``text``.
-   .... Let ``tableActionReferenceIR'`` be ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentListIR`` ``+`)+``.
-   .... Let ``tableActionIR`` be ``annotationList`` ``tableActionReferenceIR'`` ``+'#'+`` ``+`(+`` ``parameterListIR`` ``+','+`` ``parameterListIR~control~`` ``+`)+`` ``+';'+``.
-   .... The result is store ``STO`` and ``tableActionIR``.
-  ... Else:
-   .... Let ``text'`` be xref:join_text[the result of joining ``IC.+PATH+`` concatenated with ``nameIR~anno~`` with separator ``"."``].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 9</a>]</sub>+++
-   .... Let ``controlPlaneNameIR`` be xref:ite[``nameIR~anno~`` if ``cursor`` is equal to ``+GLOBAL+`` otherwise ``text'``].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 9</a>]</sub>+++
-   .... Let ``tableActionReferenceIR'`` be ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentListIR`` ``+`)+``.
-   .... Let ``tableActionIR`` be ``annotationList`` ``tableActionReferenceIR'`` ``+'#'+`` ``+`(+`` ``parameterListIR`` ``+','+`` ``parameterListIR~control~`` ``+`)+`` ``+';'+``.
-   .... The result is store ``STO`` and ``tableActionIR``.
-. +++<span class="bk-arm-anchor" id="bk-170-arm-2"></span>+++Then, try:
- .. Check that xref:name_annotation[``$name_annotation(annotationList~actionDef~)``] is an empty list.+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``text''`` be xref:join_text[the result of joining ``IC.+PATH+`` concatenated with ``nameIR`` with separator ``"."``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``controlPlaneNameIR`` be xref:ite[``nameIR`` if ``cursor`` is equal to ``+GLOBAL+`` otherwise ``text''``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``tableActionReferenceIR'`` be ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentListIR`` ``+`)+``.
- .. Let ``tableActionIR`` be ``annotationList`` ``tableActionReferenceIR'`` ``+'#'+`` ``+`(+`` ``parameterListIR`` ``+','+`` ``parameterListIR~control~`` ``+`)+`` ``+';'+``.
- .. The result is store ``STO`` and ``tableActionIR``.
+. Let ``++_++`` ``+ACTION+`` ``++_++`` ``nameIR~controlPlane~`` ``+`(+`` ``++_++`` ``+`)+`` ``++_++`` be ``actionDef``.
+. Let ``tableActionReferenceIR'`` be ``prefixedNameIR`` ``nameIR~controlPlane~`` ``+`(+`` ``argumentListIR`` ``+`)+``.
+. Let ``tableActionIR`` be ``annotationList`` ``tableActionReferenceIR'`` ``+'#'+`` ``+`(+`` ``parameterListIR`` ``+','+`` ``parameterListIR~control~`` ``+`)+`` ``+';'+``.
+. The result is store ``STO`` and ``tableActionIR``.
 
 TableAction_inst dispatch:
  Goto xref:TableAction_inst-[]
@@ -18197,33 +18178,20 @@ xref:ControlLocalDecl_inst[Compile-time evaluation of ``actionDeclarationIR``, u
 
 xref:ControlLocalDecl_inst[Compile-time evaluation of ``annotationList`` ``+TABLE+`` ``typeIR`` ``nameIR`` ``+`{+`` ``tablePropertyListIR`` ``+`}+``, under context ``IC~0~``and store ``STO``]:
 
+. Let ``objectId`` be xref:objectId_of_table[``$objectId_of_table(IC~0~.+PATH+,`` ``annotationList,`` ``nameIR)``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``IC~callee_0~`` be xref:inherit_i[an instantiation context same as ``IC~0~`` up to the ``+BLOCK+`` layer].+++<sub class="bk-mark">[FAIL]</sub>+++
-. Let ``IC~frame~`` be xref:enter_i[``IC~callee_0~`` with a new local frame].+++<sub class="bk-mark">[FAIL]</sub>+++
+. Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``+PATH+`` set to ``objectId``.
+. Let ``IC~frame~`` be xref:enter_i[``IC~callee_1~`` with a new local frame].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let store ``STO~1~`` and ``tablePropertyListIR~inst~`` be the result of xref:TableProperties_inst[compile-time evaluation of ``tablePropertyListIR``, under context ``IC~frame~``and store ``STO``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``TBL`` be xref:init_table[``$init_table(tablePropertyListIR~inst~)``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``frame'^{asterisk}^`` be ``IC~frame~.+LOCAL+.+FRAMES+``.
 . Check that ``frame'^{asterisk}^`` is a non-empty list.
 . Let ``frame`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``frame'^{asterisk}^``.
 . Let ``object~table~`` be ``+TABLE+`` ``nameIR`` ``+`{+`` ``frame`` ``TBL`` ``+`}+``.
-. Let ``nameIR~object~`` be xref:name_annotation_default[``$name_annotation_default(annotationList,`` ``nameIR)``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. +++<span class="bk-arm-anchor" id="bk-171-arm-1"></span>+++Try:
- .. Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR~object~``.
- .. Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object~table~`` is added].+++<sub class="bk-mark">[<a href="#bk-171-arm-2">→ 11</a>]</sub>+++
- .. If xref:name_annotation[``$name_annotation(annotationList)``] is an empty list:+++<sub class="bk-mark">[<a href="#bk-171-arm-2">→ 11</a>]</sub>+++
-  ... Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].+++<sub class="bk-mark">[<a href="#bk-171-arm-2">→ 11</a>]</sub>+++
-  ... Let ``constantDeclarationIR`` be ``{nbsp}~EMPTY~`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+'='+`` ``{nbsp}~VALUE~`` ``+REF+`` ``objectId`` ``+';'+``.
-  ... The result is context ``IC~1~``, store ``STO~2~``, and ``constantDeclarationIR``.
-. +++<span class="bk-arm-anchor" id="bk-171-arm-2"></span>+++Then, try:
- .. Let ``objectId`` be xref:qualify_objectId[``$qualify_objectId(IC~0~.+PATH+,`` ``nameIR~object~)``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object~table~`` is added].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``nameIR'^{asterisk}^`` be xref:name_annotation[``$name_annotation(annotationList)``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Check that ``nameIR'^{asterisk}^`` is a list of length 1.
- .. Let ``nameIR~annotation~`` be ``nameIR'^{asterisk}^``.
- .. Let ``objectId~annotation~`` be xref:qualify_objectId[``$qualify_objectId(IC~0~.+PATH+,`` ``nameIR~annotation~)``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``STO~3~`` be xref:add_store[``STO~2~`` where ``objectId~annotation~`` to ``object~table~`` is added].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``constantDeclarationIR`` be ``{nbsp}~EMPTY~`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+'='+`` ``{nbsp}~VALUE~`` ``+REF+`` ``objectId`` ``+';'+``.
- .. The result is context ``IC~1~``, store ``STO~3~``, and ``constantDeclarationIR``.
+. Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object~table~`` is added].+++<sub class="bk-mark">[FAIL]</sub>+++
+. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].+++<sub class="bk-mark">[FAIL]</sub>+++
+. Let ``constantDeclarationIR`` be ``{nbsp}~EMPTY~`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+'='+`` ``{nbsp}~VALUE~`` ``+REF+`` ``objectId`` ``+';'+``.
+. The result is context ``IC~1~``, store ``STO~2~``, and ``constantDeclarationIR``.
 
 ControlLocalDecl_inst dispatch:
 
@@ -18280,22 +18248,22 @@ xref:InstDecl_inst[Loading ``annotationList`` ``typeIR`` ``constructorTargetIR``
 
 . Let ``prefixedNameIR`` ``+`<+`` ``typeArgumentListIR`` ``+`>+`` be ``constructorTargetIR``.
 . Let constructor ``constructorDef`` ``+`<+`` ``typeArgumentListIR~inst~`` ``+`>+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` be the result of xref:Constructor_inst[finding constructor for ``prefixedNameIR`` ``+`<+`` ``typeArgumentListIR`` ``+`>+`` ``+`(+`` ``argumentListIR`` ``+`)+`` under context ``IC~0~`` at ``p``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. +++<span class="bk-arm-anchor" id="bk-172-arm-1"></span>+++Try:
- .. Let ``IC~inner~`` be xref:enter_path_i[``IC~0~`` with ``nameIR`` added to the path].+++<sub class="bk-mark">[<a href="#bk-172-arm-2">→ 4</a>]</sub>+++
- .. Let store ``STO~1~`` and instantiated ``object`` be the result of xref:Constructor_call[instantiating ``constructorDef`` ``+`<+`` ``typeArgumentListIR~inst~`` ``+`>+`` ``+`(+`` ``argumentListIR`` ``+`)+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under context ``IC~inner~`` and store ``STO~0~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-172-arm-2">→ 4</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-170-arm-1"></span>+++Try:
+ .. Let ``IC~inner~`` be xref:enter_path_i[``IC~0~`` with ``nameIR`` added to the path].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 4</a>]</sub>+++
+ .. Let store ``STO~1~`` and instantiated ``object`` be the result of xref:Constructor_call[instantiating ``constructorDef`` ``+`<+`` ``typeArgumentListIR~inst~`` ``+`>+`` ``+`(+`` ``argumentListIR`` ``+`)+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under context ``IC~inner~`` and store ``STO~0~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 4</a>]</sub>+++
  .. If let ``+EXTERN+`` ``typeId`` ``+`<+`` ``theta`` ``+`>+`` ``+`{+`` ``objectState`` ``frame`` ``externMethodDefEnv`` ``+`}+`` of type ``externObject`` be ``object``:
-  ... Let ``IC~decl~`` be xref:inherit_i[an instantiation context same as ``IC~0~`` up to the ``+GLOBAL+`` layer].+++<sub class="bk-mark">[<a href="#bk-172-arm-2">→ 4</a>]</sub>+++
-  ... Let ``objectDeclarationListIR`` be xref:flatten_objectInitializerOptIR[the list of object declarations in ``objectInitializerOptIR``].+++<sub class="bk-mark">[<a href="#bk-172-arm-2">→ 4</a>]</sub>+++
-  ... Let the updated instantiation context ``IC~decl_post~`` and store ``STO~2~`` be the result of xref:ObjectDecls_inst[loading ``objectDeclarationListIR`` under instantiation context ``IC~decl~`` and store ``STO~1~``].+++<sub class="bk-mark">[<a href="#bk-172-arm-2">→ 4</a>]</sub>+++
-  ... Let ``frame~merged~`` be xref:merge_frames[the merged frame of ``frame`` and ``IC~decl_post~.+BLOCK+.+FRAME+``].+++<sub class="bk-mark">[<a href="#bk-172-arm-2">→ 4</a>]</sub>+++
-  ... Let ``externMethodDefEnv~merged~`` be xref:merge_externMethodDefEnvs[the merged extern method definition environment of ``externMethodDefEnv`` and ``IC~decl_post~.+BLOCK+.+CALLABLE+``].+++<sub class="bk-mark">[<a href="#bk-172-arm-2">→ 4</a>]</sub>+++
+  ... Let ``IC~decl~`` be xref:inherit_i[an instantiation context same as ``IC~0~`` up to the ``+GLOBAL+`` layer].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 4</a>]</sub>+++
+  ... Let ``objectDeclarationListIR`` be xref:flatten_objectInitializerOptIR[the list of object declarations in ``objectInitializerOptIR``].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 4</a>]</sub>+++
+  ... Let the updated instantiation context ``IC~decl_post~`` and store ``STO~2~`` be the result of xref:ObjectDecls_inst[loading ``objectDeclarationListIR`` under instantiation context ``IC~decl~`` and store ``STO~1~``].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 4</a>]</sub>+++
+  ... Let ``frame~merged~`` be xref:merge_frames[the merged frame of ``frame`` and ``IC~decl_post~.+BLOCK+.+FRAME+``].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 4</a>]</sub>+++
+  ... Let ``externMethodDefEnv~merged~`` be xref:merge_externMethodDefEnvs[the merged extern method definition environment of ``externMethodDefEnv`` and ``IC~decl_post~.+BLOCK+.+CALLABLE+``].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 4</a>]</sub>+++
   ... Let ``object~merged~`` be ``+EXTERN+`` ``typeId`` ``+`<+`` ``theta`` ``+`>+`` ``+`{+`` ``objectState`` ``frame~merged~`` ``externMethodDefEnv~merged~`` ``+`}+``.
   ... Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR``.
-  ... Let ``STO~3~`` be xref:add_store[``STO~2~`` where ``objectId`` to ``object~merged~`` is added].+++<sub class="bk-mark">[<a href="#bk-172-arm-2">→ 4</a>]</sub>+++
-  ... Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``p`` layer].+++<sub class="bk-mark">[<a href="#bk-172-arm-2">→ 4</a>]</sub>+++
+  ... Let ``STO~3~`` be xref:add_store[``STO~2~`` where ``objectId`` to ``object~merged~`` is added].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 4</a>]</sub>+++
+  ... Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``p`` layer].+++<sub class="bk-mark">[<a href="#bk-170-arm-2">→ 4</a>]</sub>+++
   ... Let ``constantDeclarationIR`` be ``{nbsp}~EMPTY~`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+'='+`` ``{nbsp}~VALUE~`` ``+REF+`` ``objectId`` ``+';'+``.
   ... The result is context ``IC~1~``, store ``STO~3~``, and reference to object ``constantDeclarationIR``.
-. +++<span class="bk-arm-anchor" id="bk-172-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-170-arm-2"></span>+++Then, try:
  .. Let ``nameIR'`` be xref:name_annotation_default[``$name_annotation_default(annotationList,`` ``nameIR)``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``IC~inner~`` be xref:enter_path_i[``IC~0~`` with ``nameIR'`` added to the path].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let store ``STO~1~`` and instantiated ``object`` be the result of xref:Constructor_call[instantiating ``constructorDef`` ``+`<+`` ``typeArgumentListIR~inst~`` ``+`>+`` ``+`(+`` ``argumentListIR`` ``+`)+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under context ``IC~inner~`` and store ``STO~0~`` at ``p``].+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -18332,8 +18300,9 @@ xref:ActionDecl_inst[ActionDecl_inst]:
 
 xref:ActionDecl_inst[Loading ``annotationList`` ``+ACTION+`` ``nameIR`` ``+`(+`` ``parameterListIR`` ``+`)+`` ``blockStatementIR``, under context ``IC~0~`` at ``p``]:
 
+. Let ``nameIR~controlPlane~`` be xref:controlPlaneName_of_action[``$controlPlaneName_of_action(IC~0~.+PATH+,`` ``annotationList,`` ``nameIR)``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``callableId`` be xref:callableId_IR[the callable identifier for ``nameIR`` ``+`(+`` ``parameterListIR`` ``+`)+``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. Let ``actionDef`` be ``annotationList`` ``+ACTION+`` ``nameIR`` ``+`(+`` ``parameterListIR`` ``+`)+`` ``blockStatementIR``.
+. Let ``actionDef`` be ``annotationList`` ``+ACTION+`` ``nameIR`` ``nameIR~controlPlane~`` ``+`(+`` ``parameterListIR`` ``+`)+`` ``blockStatementIR``.
 . Let ``IC~1~`` be xref:add_callableDef_non_overload_i[``IC~0~`` where ``callableId`` to ``actionDef`` is added as a non-overloaded callable to the ``p`` layer].+++<sub class="bk-mark">[FAIL]</sub>+++
 . The result is context ``IC~1~``.
 
@@ -18772,22 +18741,22 @@ xref:Constructor_inst[Constructor_inst]:
 
 xref:Constructor_inst[Finding constructor for ``prefixedNameIR`` ``+`<+`` ``typeArgumentIR'^{asterisk}^`` ``+`>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` under context ``IC`` at ``p``]:
 
-. +++<span class="bk-arm-anchor" id="bk-173-arm-1"></span>+++Try:
- .. If xref:find_typeDef_i[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``IC``] is none:+++<sub class="bk-mark">[<a href="#bk-173-arm-2">→ 2</a>]</sub>+++
-  ... Let ``callResolution<constructorDef>^?^`` be xref:find_constructorDef_i[the overloaded constructor definition of ``prefixedNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` in ``IC``].+++<sub class="bk-mark">[<a href="#bk-173-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-171-arm-1"></span>+++Try:
+ .. If xref:find_typeDef_i[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``IC``] is none:+++<sub class="bk-mark">[<a href="#bk-171-arm-2">→ 2</a>]</sub>+++
+  ... Let ``callResolution<constructorDef>^?^`` be xref:find_constructorDef_i[the overloaded constructor definition of ``prefixedNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` in ``IC``].+++<sub class="bk-mark">[<a href="#bk-171-arm-2">→ 2</a>]</sub>+++
   ... If ``callResolution<constructorDef>^?^`` is defined:
    .... Let ``++_++`` ``+':'+`` ``constructorDef`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<constructorDef>^?^``.
    .... The result is constructor ``constructorDef`` ``+`<+`` ``typeArgumentIR'^{asterisk}^`` ``+`>+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``.
-. +++<span class="bk-arm-anchor" id="bk-173-arm-2"></span>+++Then, try:
- .. Let ``typeDefIR'^?^`` be xref:find_typeDef_i[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``IC``].+++<sub class="bk-mark">[<a href="#bk-173-arm-3">→ 3</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-171-arm-2"></span>+++Then, try:
+ .. Let ``typeDefIR'^?^`` be xref:find_typeDef_i[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``IC``].+++<sub class="bk-mark">[<a href="#bk-171-arm-3">→ 3</a>]</sub>+++
  .. If ``typeDefIR'^?^`` is defined:
   ... Let ``typeDefIR`` be ``typeDefIR'^?^``.
   ... If ``typeDefIR`` does not have type ``typedefTypeIR``:
-   .... Let ``callResolution<constructorDef>^?^`` be xref:find_constructorDef_i[the overloaded constructor definition of ``prefixedNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` in ``IC``].+++<sub class="bk-mark">[<a href="#bk-173-arm-3">→ 3</a>]</sub>+++
+   .... Let ``callResolution<constructorDef>^?^`` be xref:find_constructorDef_i[the overloaded constructor definition of ``prefixedNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` in ``IC``].+++<sub class="bk-mark">[<a href="#bk-171-arm-3">→ 3</a>]</sub>+++
    .... If ``callResolution<constructorDef>^?^`` is defined:
     ..... Let ``++_++`` ``+':'+`` ``constructorDef`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<constructorDef>^?^``.
     ..... The result is constructor ``constructorDef`` ``+`<+`` ``typeArgumentIR'^{asterisk}^`` ``+`>+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``.
-. +++<span class="bk-arm-anchor" id="bk-173-arm-3"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-171-arm-3"></span>+++Then, try:
  .. Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
  .. Let ``typeDefIR^?^`` be xref:find_typeDef_i[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``IC``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Check that ``typeDefIR^?^`` is defined.
@@ -19000,9 +18969,9 @@ xref:merge_frames[The merged frame of ``frame`` and ``+`{+`` ``(`` ``id`` ``+':'
 
 xref:merge_externMethodDefEnvs[The merged extern method definition environment of ``externMethodDefEnv`` and ``set<pair<callableId,`` ``callableDef>>``]
 
-. +++<span class="bk-arm-anchor" id="bk-174-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-172-arm-1"></span>+++Try:
  .. If ``set<pair<callableId,`` ``callableDef>>`` is equal to ``+`{+`` ``·`` ``+`}+``: return ``externMethodDefEnv``.
-. +++<span class="bk-arm-anchor" id="bk-174-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-172-arm-2"></span>+++Then, try:
  .. Let ``+`{+`` ``pair<callableId,`` ``callableDef>^{asterisk}^`` ``+`}+`` be ``set<pair<callableId,`` ``callableDef>>``.
  .. Check that ``pair<callableId,`` ``callableDef>^{asterisk}^`` is a non-empty list.
  .. Let ``callableId~h~`` ``+':'+`` ``callableDef~h~`` ``{two-colons}`` ``(`` ``callableId~t~`` ``+':'+`` ``callableDef~t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``callableDef>^{asterisk}^``.
@@ -19048,6 +19017,12 @@ xref:ObjectDecls_inst[Loading ``objectDeclarationIR^{asterisk}^`` under instanti
 ObjectDecls_inst dispatch:
  Goto xref:ObjectDecls_inst-[]
 
+xref:controlPlaneName_of_action[$controlPlaneName_of_action(objectId, annotationList, nameIR)]
+
+. Let ``nameIR~local~`` be xref:name_annotation_default[``$name_annotation_default(annotationList,`` ``nameIR)``].+++<sub class="bk-mark">[FAIL]</sub>+++
+. Let ``objectId'`` be xref:qualify_objectId[``$qualify_objectId(objectId,`` ``nameIR~local~)``].+++<sub class="bk-mark">[FAIL]</sub>+++
+. Return xref:join_text[the result of joining ``objectId'`` with separator ``"."``].+++<sub class="bk-mark">[FAIL]</sub>+++
+
 xref:callableId_of_externMethodPrototypeIR[The callable id of  ``externMethodPrototypeIR``]
 
 . If let ``++_++`` ``++_++`` ``nameIR`` ``+`<+`` ``++_++`` ``+','+`` ``++_++`` ``+`>+`` ``+`(+`` ``parameterListIR`` ``+`)+`` ``+';'+`` be ``externMethodPrototypeIR``:
@@ -19065,6 +19040,11 @@ xref:constructor_of_externConstructorPrototypeIR[The constructor definition of  
 . Let ``typeParameterListIR`` be ``typeParameterListIR~expl~`` concatenated with ``typeParameterListIR~impl~``.
 . Let ``constructorDef`` be ``+EXTERN+`` ``nameIR`` ``+`<+`` ``typeParameterListIR`` ``+`>+`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+`{+`` ``externMethodPrototypeListIR`` ``+`}+``.
 . Return ``constructorDef``.
+
+xref:objectId_of_table[$objectId_of_table(objectId, annotationList, nameIR)]
+
+. Let ``nameIR~local~`` be xref:name_annotation_default[``$name_annotation_default(annotationList,`` ``nameIR)``].+++<sub class="bk-mark">[FAIL]</sub>+++
+. Return xref:qualify_objectId[``$qualify_objectId(objectId,`` ``nameIR~local~)``].+++<sub class="bk-mark">[FAIL]</sub>+++
 
 xref:init_table[$init_table(tablePropertyIR^{asterisk}^)]
 
@@ -19088,27 +19068,27 @@ xref:init_table[$init_table(tablePropertyIR^{asterisk}^)]
 
 xref:init_tableKeys[$init_tableKeys(tablePropertyIR^{asterisk}^)]
 
-. +++<span class="bk-arm-anchor" id="bk-175-arm-1"></span>+++Try:
- .. Let ``tablePropertyIR'^{asterisk}^`` be xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableKeysPropertyIR`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-175-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-173-arm-1"></span>+++Try:
+ .. Let ``tablePropertyIR'^{asterisk}^`` be xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableKeysPropertyIR`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-173-arm-2">→ 2</a>]</sub>+++
  .. If ``tablePropertyIR'^{asterisk}^`` has type ``tableKeysPropertyIR*``:
   ... Let ``tableKeysPropertyIR'^{asterisk}^`` be ``tablePropertyIR'^{asterisk}^``.
   ... If ``tableKeysPropertyIR'^{asterisk}^`` is a list of length 1:
    .... Let ``tableKeysPropertyIR`` be ``tableKeysPropertyIR'^{asterisk}^``.
    .... Return ``tableKeysPropertyIR``.
-. +++<span class="bk-arm-anchor" id="bk-175-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-173-arm-2"></span>+++Then, try:
  .. Check that xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableKeysPropertyIR`` ``)^{asterisk}^``] is an empty list.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``+KEY+`` ``+'='+`` ``+`{+`` ``·`` ``+`}+``.
 
 xref:init_tableEntries[$init_tableEntries(tablePropertyIR^{asterisk}^)]
 
-. +++<span class="bk-arm-anchor" id="bk-176-arm-1"></span>+++Try:
- .. Let ``tablePropertyIR'^{asterisk}^`` be xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableEntriesPropertyIR`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-176-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-174-arm-1"></span>+++Try:
+ .. Let ``tablePropertyIR'^{asterisk}^`` be xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableEntriesPropertyIR`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-174-arm-2">→ 2</a>]</sub>+++
  .. If ``tablePropertyIR'^{asterisk}^`` has type ``tableEntriesPropertyIR*``:
   ... Let ``tableEntriesPropertyIR'^{asterisk}^`` be ``tablePropertyIR'^{asterisk}^``.
   ... If ``tableEntriesPropertyIR'^{asterisk}^`` is a list of length 1:
    .... Let ``tableEntriesPropertyIR`` be ``tableEntriesPropertyIR'^{asterisk}^``.
    .... Return ``tableEntriesPropertyIR``.
-. +++<span class="bk-arm-anchor" id="bk-176-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-174-arm-2"></span>+++Then, try:
  .. Check that xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableEntriesPropertyIR`` ``)^{asterisk}^``] is an empty list.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``{nbsp}~EMPTY~`` ``·`` ``+ENTRIES+`` ``+'='+`` ``+`{+`` ``·`` ``+`}+``.
 
@@ -19182,11 +19162,11 @@ xref:add_vars_e[$add_vars_e(p, EC, prefixedNameIR^{asterisk}^, value^{asterisk}^
 
 xref:update_var_e[``EC`` where ``prefixedNameIR`` is updated to ``value`` from the ``p`` layer]
 
-. +++<span class="bk-arm-anchor" id="bk-177-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-175-arm-1"></span>+++Try:
  .. If let ``+'.'+`` ``id`` be ``prefixedNameIR``:
-  ... Let ``frame`` be xref:update_map[the map ``EC.+GLOBAL+.+FRAME+`` with the value for ``id`` is updated to ``value``].+++<sub class="bk-mark">[<a href="#bk-177-arm-2">→ 2</a>]</sub>+++
+  ... Let ``frame`` be xref:update_map[the map ``EC.+GLOBAL+.+FRAME+`` with the value for ``id`` is updated to ``value``].+++<sub class="bk-mark">[<a href="#bk-175-arm-2">→ 2</a>]</sub>+++
   ... Return ``EC`` with ``+GLOBAL+.+FRAME+`` set to ``frame``.
-. +++<span class="bk-arm-anchor" id="bk-177-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-175-arm-2"></span>+++Then, try:
  .. If ``p`` matches pattern ``+GLOBAL+``:
   ... Check that ``prefixedNameIR`` matches pattern ``{nbsp}~BARE~`` ``%``.
   ... Let ``{nbsp}~BARE~`` ``id`` be ``prefixedNameIR``.
@@ -19206,10 +19186,10 @@ xref:update_var_e[``EC`` where ``prefixedNameIR`` is updated to ``value`` from t
  .. Else:
   ... Check that ``prefixedNameIR`` matches pattern ``{nbsp}~BARE~`` ``%``.
   ... Let ``{nbsp}~BARE~`` ``id`` be ``prefixedNameIR``.
-  ... +++<span class="bk-arm-anchor" id="bk-178-arm-1"></span>+++Try:
+  ... +++<span class="bk-arm-anchor" id="bk-176-arm-1"></span>+++Try:
    .... If ``EC.+LOCAL+.+FRAMES+`` is an empty list:
-    ..... Return xref:update_var_e[``EC`` where ``{nbsp}~BARE~`` ``id`` is updated to ``value`` from the ``+BLOCK+`` layer].+++<sub class="bk-mark">[<a href="#bk-178-arm-2">→ iv</a>]</sub>+++
-  ... +++<span class="bk-arm-anchor" id="bk-178-arm-2"></span>+++Then, try:
+    ..... Return xref:update_var_e[``EC`` where ``{nbsp}~BARE~`` ``id`` is updated to ``value`` from the ``+BLOCK+`` layer].+++<sub class="bk-mark">[<a href="#bk-176-arm-2">→ iv</a>]</sub>+++
+  ... +++<span class="bk-arm-anchor" id="bk-176-arm-2"></span>+++Then, try:
    .... Let ``frame^{asterisk}^`` be ``EC.+LOCAL+.+FRAMES+``.
    .... Check that ``frame^{asterisk}^`` is a non-empty list.
    .... Let ``frame~h~`` ``{two-colons}`` ``frame~t~^{asterisk}^`` be ``frame^{asterisk}^``.
@@ -19236,21 +19216,21 @@ xref:find_var_e[The value of ``prefixedNameIR`` from the ``p`` layer of ``EC``]
   ... Let ``value`` be ``value'^?^``.
   ... Return ``value``.
  .. Else if ``p`` matches pattern ``+BLOCK+``:
-  ... +++<span class="bk-arm-anchor" id="bk-179-arm-1"></span>+++Try:
-   .... Let ``value'^?^`` be xref:find_map[the value of ``id`` in map ``EC.+BLOCK+.+FRAME+``].+++<sub class="bk-mark">[<a href="#bk-179-arm-2">→ ii</a>]</sub>+++
+  ... +++<span class="bk-arm-anchor" id="bk-177-arm-1"></span>+++Try:
+   .... Let ``value'^?^`` be xref:find_map[the value of ``id`` in map ``EC.+BLOCK+.+FRAME+``].+++<sub class="bk-mark">[<a href="#bk-177-arm-2">→ ii</a>]</sub>+++
    .... If ``value'^?^`` is defined:
     ..... Let ``value`` be ``value'^?^``.
     ..... Return ``value``.
-  ... +++<span class="bk-arm-anchor" id="bk-179-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-177-arm-2"></span>+++Then, try:
    .... Check that xref:find_map[the value of ``id`` in map ``EC.+BLOCK+.+FRAME+``] is none.+++<sub class="bk-mark">[FAIL]</sub>+++
    .... Return xref:find_var_e[the value of ``{nbsp}~BARE~`` ``id`` from the ``+GLOBAL+`` layer of ``EC``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Else:
-  ... +++<span class="bk-arm-anchor" id="bk-180-arm-1"></span>+++Try:
-   .... Let ``value'^?^`` be xref:find_maps[the value of ``id`` in maps ``EC.+LOCAL+.+FRAMES+``].+++<sub class="bk-mark">[<a href="#bk-180-arm-2">→ ii</a>]</sub>+++
+  ... +++<span class="bk-arm-anchor" id="bk-178-arm-1"></span>+++Try:
+   .... Let ``value'^?^`` be xref:find_maps[the value of ``id`` in maps ``EC.+LOCAL+.+FRAMES+``].+++<sub class="bk-mark">[<a href="#bk-178-arm-2">→ ii</a>]</sub>+++
    .... If ``value'^?^`` is defined:
     ..... Let ``value`` be ``value'^?^``.
     ..... Return ``value``.
-  ... +++<span class="bk-arm-anchor" id="bk-180-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-178-arm-2"></span>+++Then, try:
    .... Check that xref:find_maps[the value of ``id`` in maps ``EC.+LOCAL+.+FRAMES+``] is none.+++<sub class="bk-mark">[FAIL]</sub>+++
    .... Return xref:find_var_e[the value of ``{nbsp}~BARE~`` ``id`` from the ``+BLOCK+`` layer of ``EC``].+++<sub class="bk-mark">[FAIL]</sub>+++
 
@@ -19267,12 +19247,12 @@ xref:find_type_e[$find_type_e(p, EC, nameIR)]
 . If ``p`` matches pattern ``+BLOCK+``:
  .. Return xref:find_map[the value of ``nameIR`` in map ``EC.+BLOCK+.+TYPE+``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Else if ``p`` matches pattern ``+LOCAL+``:
- .. +++<span class="bk-arm-anchor" id="bk-181-arm-1"></span>+++Try:
-  ... Let ``typeIR'^?^`` be xref:find_map[the value of ``nameIR`` in map ``EC.+LOCAL+.+TYPE+``].+++<sub class="bk-mark">[<a href="#bk-181-arm-2">→ b</a>]</sub>+++
+ .. +++<span class="bk-arm-anchor" id="bk-179-arm-1"></span>+++Try:
+  ... Let ``typeIR'^?^`` be xref:find_map[the value of ``nameIR`` in map ``EC.+LOCAL+.+TYPE+``].+++<sub class="bk-mark">[<a href="#bk-179-arm-2">→ b</a>]</sub>+++
   ... If ``typeIR'^?^`` is defined:
    .... Let ``typeIR`` be ``typeIR'^?^``.
    .... Return ``typeIR``.
- .. +++<span class="bk-arm-anchor" id="bk-181-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-179-arm-2"></span>+++Then, try:
   ... Check that xref:find_map[the value of ``nameIR`` in map ``EC.+LOCAL+.+TYPE+``] is none.+++<sub class="bk-mark">[FAIL]</sub>+++
   ... Return xref:find_type_e[``$find_type_e(+BLOCK+,`` ``EC,`` ``nameIR)``].+++<sub class="bk-mark">[FAIL]</sub>+++
 
@@ -19281,34 +19261,34 @@ xref:find_callableDef_overloaded_e[The overloaded callable definition of ``prefi
 . If ``p`` matches pattern ``+GLOBAL+``:
  .. If let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``:
   ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... +++<span class="bk-arm-anchor" id="bk-182-arm-1"></span>+++Try:
-   .... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].+++<sub class="bk-mark">[<a href="#bk-182-arm-2">→ iii</a>]</sub>+++
+  ... +++<span class="bk-arm-anchor" id="bk-180-arm-1"></span>+++Try:
+   .... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].+++<sub class="bk-mark">[<a href="#bk-180-arm-2">→ iii</a>]</sub>+++
    .... If ``callResolution<callableDef>^?^`` is defined:
     ..... Let ``callableId`` ``+':'+`` ``callableDef`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``.
     ..... Return ``callableId`` ``+':'+`` ``(`` ``+GLOBAL+,`` ``callableDef`` ``)`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^``.
-  ... +++<span class="bk-arm-anchor" id="bk-182-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-180-arm-2"></span>+++Then, try:
    .... Check that xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``] is none.+++<sub class="bk-mark">[FAIL]</sub>+++
    .... Return ``·``.
  .. Else:
   ... Let ``+'.'+`` ``nameIR`` be ``prefixedNameIR``.
   ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... +++<span class="bk-arm-anchor" id="bk-183-arm-1"></span>+++Try:
-   .... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].+++<sub class="bk-mark">[<a href="#bk-183-arm-2">→ iv</a>]</sub>+++
+  ... +++<span class="bk-arm-anchor" id="bk-181-arm-1"></span>+++Try:
+   .... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].+++<sub class="bk-mark">[<a href="#bk-181-arm-2">→ iv</a>]</sub>+++
    .... If ``callResolution<callableDef>^?^`` is defined:
     ..... Let ``callableId`` ``+':'+`` ``callableDef`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``.
     ..... Return ``callableId`` ``+':'+`` ``(`` ``+GLOBAL+,`` ``callableDef`` ``)`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^``.
-  ... +++<span class="bk-arm-anchor" id="bk-183-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-181-arm-2"></span>+++Then, try:
    .... Check that xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``] is none.+++<sub class="bk-mark">[FAIL]</sub>+++
    .... Return ``·``.
 . Else if ``p`` matches pattern ``+BLOCK+``:
  .. If let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``:
   ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... +++<span class="bk-arm-anchor" id="bk-184-arm-1"></span>+++Try:
-   .... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].+++<sub class="bk-mark">[<a href="#bk-184-arm-2">→ iii</a>]</sub>+++
+  ... +++<span class="bk-arm-anchor" id="bk-182-arm-1"></span>+++Try:
+   .... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].+++<sub class="bk-mark">[<a href="#bk-182-arm-2">→ iii</a>]</sub>+++
    .... If ``callResolution<callableDef>^?^`` is defined:
     ..... Let ``callableId`` ``+':'+`` ``callableDef`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``.
     ..... Return ``callableId`` ``+':'+`` ``(`` ``+BLOCK+,`` ``callableDef`` ``)`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^``.
-  ... +++<span class="bk-arm-anchor" id="bk-184-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-182-arm-2"></span>+++Then, try:
    .... Check that xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``] is none.+++<sub class="bk-mark">[FAIL]</sub>+++
    .... Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+GLOBAL+`` layer of ``EC``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Else:
@@ -19511,25 +19491,25 @@ xref:Expr_eval[Evaluating ``unop`` ``typedExpressionIR`` annotated with ``expres
 
 xref:Expr_eval[Evaluating ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR~r~`` annotated with ``expressionNoteIR``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
-. +++<span class="bk-arm-anchor" id="bk-186-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-184-arm-1"></span>+++Try:
  .. If ``binop`` is not in ``+[+`` ``+'&&'+,`` ``+'||'+`` ``+]+``:
-  ... Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionListResult`` be the result of <<Exprs_eval,evaluating ``+[+`` ``typedExpressionIR~l~,`` ``typedExpressionIR~r~`` ``+]+``, under context ``EC`` and state ``ARCH`` at ``p``>>.+++<sub class="bk-mark">[<a href="#bk-186-arm-2">→ 2</a>]</sub>+++
+  ... Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionListResult`` be the result of <<Exprs_eval,evaluating ``+[+`` ``typedExpressionIR~l~,`` ``typedExpressionIR~r~`` ``+]+``, under context ``EC`` and state ``ARCH`` at ``p``>>.+++<sub class="bk-mark">[<a href="#bk-184-arm-2">→ 2</a>]</sub>+++
   ... If let ``abortResult`` of type ``abortResult`` be ``expressionListResult``:
    .... The result is context ``EC~1~``, state ``ARCH~1~`` and ``abortResult``.
   ... Else:
    .... Let ``{nbsp}~CONT~`` ``value^{asterisk}^`` be ``expressionListResult``.
    .... If ``value^{asterisk}^`` is a list of length 2:
     ..... Let ``+[+`` ``value~l~,`` ``value~r~`` ``+]+`` be ``value^{asterisk}^``.
-    ..... Let ``value''''`` be xref:bin_op[``value~l~`` ``binop`` ``value~r~``].+++<sub class="bk-mark">[<a href="#bk-186-arm-2">→ 2</a>]</sub>+++
+    ..... Let ``value''''`` be xref:bin_op[``value~l~`` ``binop`` ``value~r~``].+++<sub class="bk-mark">[<a href="#bk-184-arm-2">→ 2</a>]</sub>+++
     ..... Let ``expressionResult`` be ``{nbsp}~CONT~`` ``value''''``.
     ..... The result is context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
-. +++<span class="bk-arm-anchor" id="bk-186-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-184-arm-2"></span>+++Then, try:
  .. If ``binop`` matches pattern ``+'&&'+``:
   ... Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'`` be the result of xref:Expr_eval[evaluating ``typedExpressionIR~l~``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... +++<span class="bk-arm-anchor" id="bk-187-arm-1"></span>+++Try:
+  ... +++<span class="bk-arm-anchor" id="bk-185-arm-1"></span>+++Try:
    .... If let ``abortResult`` of type ``abortResult`` be ``expressionResult'``:
     ..... The result is context ``EC~1~``, state ``ARCH~1~`` and ``abortResult``.
-  ... +++<span class="bk-arm-anchor" id="bk-187-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-185-arm-2"></span>+++Then, try:
    .... If ``expressionResult'`` is equal to ``{nbsp}~CONT~`` ``{nbsp}~B~`` ``false``:
     ..... Let ``expressionResult`` be ``{nbsp}~CONT~`` ``{nbsp}~B~`` ``false``.
     ..... The result is context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
@@ -19538,10 +19518,10 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR
     ..... The result is context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~``.
  .. Else if ``binop`` matches pattern ``+'||'+``:
   ... Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'`` be the result of xref:Expr_eval[evaluating ``typedExpressionIR~l~``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... +++<span class="bk-arm-anchor" id="bk-188-arm-1"></span>+++Try:
+  ... +++<span class="bk-arm-anchor" id="bk-186-arm-1"></span>+++Try:
    .... If let ``abortResult`` of type ``abortResult`` be ``expressionResult'``:
     ..... The result is context ``EC~1~``, state ``ARCH~1~`` and ``abortResult``.
-  ... +++<span class="bk-arm-anchor" id="bk-188-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-186-arm-2"></span>+++Then, try:
    .... If ``expressionResult'`` is equal to ``{nbsp}~CONT~`` ``{nbsp}~B~`` ``true``:
     ..... Let ``expressionResult`` be ``{nbsp}~CONT~`` ``{nbsp}~B~`` ``true``.
     ..... The result is context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
@@ -19552,10 +19532,10 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR
 xref:Expr_eval[Evaluating ``typedExpressionIR~cond~`` ``+'?'+`` ``typedExpressionIR~true~`` ``+':'+`` ``typedExpressionIR~false~`` annotated with ``expressionNoteIR``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be the result of xref:Expr_eval[evaluating ``typedExpressionIR~cond~``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. +++<span class="bk-arm-anchor" id="bk-189-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-187-arm-1"></span>+++Try:
  .. If let ``abortResult`` of type ``abortResult`` be ``expressionResult``:
   ... The result is context ``EC~1~``, state ``ARCH~1~`` and ``abortResult``.
-. +++<span class="bk-arm-anchor" id="bk-189-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-187-arm-2"></span>+++Then, try:
  .. If ``expressionResult`` is equal to ``{nbsp}~CONT~`` ``{nbsp}~B~`` ``true``:
   ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~true~`` be the result of xref:Expr_eval[evaluating ``typedExpressionIR~true~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[FAIL]</sub>+++
   ... The result is context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~true~``.
@@ -19646,8 +19626,8 @@ xref:Expr_eval[Evaluating ``+TYPE+`` ``prefixedNameIR`` ``+'.'+`` ``nameIR`` ann
 
 xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` annotated with ``expressionNoteIR``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
-. +++<span class="bk-arm-anchor" id="bk-190-arm-1"></span>+++Try:
- .. Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'`` be the result of xref:Expr_eval[evaluating ``typedExpressionIR~base~``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-190-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-188-arm-1"></span>+++Try:
+ .. Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'`` be the result of xref:Expr_eval[evaluating ``typedExpressionIR~base~``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-188-arm-2">→ 2</a>]</sub>+++
  .. If let ``abortResult`` of type ``abortResult`` be ``expressionResult'``:
   ... The result is context ``EC~1~``, state ``ARCH~1~`` and ``abortResult``.
  .. Else:
@@ -19672,7 +19652,7 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` annot
        ........ Let ``expressionResult`` be ``{nbsp}~CONT~`` ``value~last~``.
        ........ The result is context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
    .... Else if ``nameIR`` is equal to ``"lastIndex"``:
-    ..... Let ``nat'`` be <<max_nat,max``+`(+`` ``+[+`` ``++_++,`` ``1`` ``+]+`` ``+`)+``>>.+++<sub class="bk-mark">[<a href="#bk-190-arm-2">→ 2</a>]</sub>+++
+    ..... Let ``nat'`` be <<max_nat,max``+`(+`` ``+[+`` ``++_++,`` ``1`` ``+]+`` ``+`)+``>>.+++<sub class="bk-mark">[<a href="#bk-188-arm-2">→ 2</a>]</sub>+++
     ..... Let ``i`` be ``nat'`` ``-`` ``1``.
     ..... If let ``n~idx_last~`` of type ``nat`` be ``i``:
      ...... Let ``value~idx_last~`` be ``32`` ``+W+`` ``n~idx_last~``.
@@ -19680,26 +19660,26 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` annot
      ...... The result is context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
   ... Else if let ``structValue~base~`` of type ``structValue`` be ``value``:
    .... Let ``+STRUCT+`` ``++_++`` ``+`{+`` ``(`` ``value~field~`` ``id~field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``structValue~base~``.
-   .... Let ``value'^?^`` be xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~field~,`` ``value~field~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-190-arm-2">→ 2</a>]</sub>+++
+   .... Let ``value'^?^`` be xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~field~,`` ``value~field~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-188-arm-2">→ 2</a>]</sub>+++
    .... If ``value'^?^`` is defined:
     ..... Let ``value~member~`` be ``value'^?^``.
     ..... Let ``expressionResult`` be ``{nbsp}~CONT~`` ``value~member~``.
     ..... The result is context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
   ... Else if let ``headerValue~base~`` of type ``headerValue`` be ``value``:
    .... Let ``+HEADER+`` ``++_++`` ``+`{+`` ``++_++`` ``+';'+`` ``(`` ``value~field~`` ``id~field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerValue~base~``.
-   .... Let ``value'^?^`` be xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~field~,`` ``value~field~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-190-arm-2">→ 2</a>]</sub>+++
+   .... Let ``value'^?^`` be xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~field~,`` ``value~field~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-188-arm-2">→ 2</a>]</sub>+++
    .... If ``value'^?^`` is defined:
     ..... Let ``value~member~`` be ``value'^?^``.
     ..... Let ``expressionResult`` be ``{nbsp}~CONT~`` ``value~member~``.
     ..... The result is context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
   ... Else if let ``headerUnionValue~base~`` of type ``headerUnionValue`` be ``value``:
    .... Let ``+HEADER_UNION+`` ``++_++`` ``+`{+`` ``(`` ``value~field~`` ``id~field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerUnionValue~base~``.
-   .... Let ``value'^?^`` be xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~field~,`` ``value~field~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-190-arm-2">→ 2</a>]</sub>+++
+   .... Let ``value'^?^`` be xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~field~,`` ``value~field~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-188-arm-2">→ 2</a>]</sub>+++
    .... If ``value'^?^`` is defined:
     ..... Let ``value~member~`` be ``value'^?^``.
     ..... Let ``expressionResult`` be ``{nbsp}~CONT~`` ``value~member~``.
     ..... The result is context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
-. +++<span class="bk-arm-anchor" id="bk-190-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-188-arm-2"></span>+++Then, try:
  .. Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'`` be the result of xref:Expr_eval[evaluating ``typedExpressionIR~base~``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Check that ``expressionResult'`` has type ``continueResult<value>``.
  .. Let ``{nbsp}~CONT~`` ``value`` be ``expressionResult'``.
@@ -19764,11 +19744,11 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` annot
 
 <<Expr_eval,Evaluating ``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR`` ``sliceop`` ``typedExpressionIR'`` ``+`]+`` annotated with ``expressionNoteIR``, under context ``EC`` and state ``ARCH`` at ``p``>>:
 
-. +++<span class="bk-arm-anchor" id="bk-191-arm-1"></span>+++Try:
- .. Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionListResult`` be the result of <<Exprs_eval,evaluating ``+[+`` ``typedExpressionIR~base~,`` ``typedExpressionIR,`` ``typedExpressionIR'`` ``+]+``, under context ``EC`` and state ``ARCH`` at ``p``>>.+++<sub class="bk-mark">[<a href="#bk-191-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-189-arm-1"></span>+++Try:
+ .. Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionListResult`` be the result of <<Exprs_eval,evaluating ``+[+`` ``typedExpressionIR~base~,`` ``typedExpressionIR,`` ``typedExpressionIR'`` ``+]+``, under context ``EC`` and state ``ARCH`` at ``p``>>.+++<sub class="bk-mark">[<a href="#bk-189-arm-2">→ 2</a>]</sub>+++
  .. If let ``abortResult`` of type ``abortResult`` be ``expressionListResult``:
   ... The result is context ``EC~1~``, state ``ARCH~1~`` and ``abortResult``.
-. +++<span class="bk-arm-anchor" id="bk-191-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-189-arm-2"></span>+++Then, try:
  .. If ``sliceop`` matches pattern ``+':'+``:
   ... Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionListResult`` be the result of <<Exprs_eval,evaluating ``+[+`` ``typedExpressionIR~base~,`` ``typedExpressionIR,`` ``typedExpressionIR'`` ``+]+``, under context ``EC`` and state ``ARCH`` at ``p``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
   ... Check that ``expressionListResult`` has type ``continueResult<value*>``.
@@ -19811,9 +19791,9 @@ xref:Expr_eval[Evaluating ``+`(+`` ``typedExpressionIR`` ``+`)+`` annotated with
 
 Expr_eval dispatch:
 
-. +++<span class="bk-arm-anchor" id="bk-185-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-183-arm-1"></span>+++Try:
  .. Goto xref:Expr_eval-literalExpressionIR[literalExpressionIR]
-. +++<span class="bk-arm-anchor" id="bk-185-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-183-arm-2"></span>+++Then, try:
  .. If let ``prefixedNameIR`` of type ``prefixedNameIR`` be ``expressionIR``: goto xref:Expr_eval-referenceExpressionIR[referenceExpressionIR]
  .. Else if let ``defaultExpression`` of type ``defaultExpression`` be ``expressionIR``: goto xref:Expr_eval-defaultExpressionIR[defaultExpressionIR]
  .. Else if let ``unop`` ``typedExpressionIR`` of type ``unaryExpressionIR`` be ``expressionIR``: goto xref:Expr_eval-unaryExpressionIR[unaryExpressionIR]
@@ -19937,25 +19917,25 @@ xref:Lvalue_eval[Evaluating ``typedLvalueIR`` ``+'.'+`` ``nameIR`` with note ``l
  .. If ``value`` has type ``headerStackValue``:
   ... Let ``headerStackValue`` be ``value``.
   ... Let ``+HEADER_STACK+`` ``+`[+`` ``value~element~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+`)+`` ``+`]+`` be ``headerStackValue``.
-  ... +++<span class="bk-arm-anchor" id="bk-192-arm-1"></span>+++Try:
+  ... +++<span class="bk-arm-anchor" id="bk-190-arm-1"></span>+++Try:
    .... If ``nameIR`` is equal to ``"next"``:
     ..... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
     ..... If ``n~idx~`` is greater than or equal to ``n~size~``:
      ...... Let ``rejectTransitionResult`` be ``+REJECT+`` ``+ERROR+`` ``+'.'+`` ``"StackOutOfBounds"``.
      ...... The result is context ``EC~1~``, state ``ARCH~1~``, and result ``rejectTransitionResult``.
-  ... +++<span class="bk-arm-anchor" id="bk-192-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-190-arm-2"></span>+++Then, try:
    .... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
    .... If ``nameIR`` is equal to ``"next"``:
     ..... If ``n~idx~`` is less than ``n~size~``:
      ...... Let ``storageReferenceResult`` be ``{nbsp}~CONT~`` ``storageReference`` ``+'.'+`` ``nameIR``.
      ...... The result is context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult``.
-  ... +++<span class="bk-arm-anchor" id="bk-192-arm-3"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-190-arm-3"></span>+++Then, try:
    .... If ``nameIR`` is equal to ``"last"``:
     ..... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
     ..... If ``n~idx~`` is less than ``1`` or ``n~idx~`` is greater than ``n~size~``:
      ...... Let ``rejectTransitionResult`` be ``+REJECT+`` ``+ERROR+`` ``+'.'+`` ``"StackOutOfBounds"``.
      ...... The result is context ``EC~1~``, state ``ARCH~1~``, and result ``rejectTransitionResult``.
-  ... +++<span class="bk-arm-anchor" id="bk-192-arm-4"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-190-arm-4"></span>+++Then, try:
    .... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
    .... Check that ``nameIR`` is equal to ``"last"``.
    .... Check that ``~n~idx~`` ``<`` ``1`` ``\/`` ``n~idx~`` ``>`` ``n~size~``.
@@ -20327,10 +20307,10 @@ xref:Stmt_eval[Runtime evaluation of ``conditionalStatementIR``, under context `
 
 . If let ``+IF+`` ``+`(+`` ``typedExpressionIR~cond~`` ``+`)+`` ``statementIR~then~`` be ``conditionalStatementIR``:
  .. Let context ``EC~cond~``, state ``ARCH~cond~`` and ``expressionResult`` be the result of xref:Expr_eval[evaluating ``typedExpressionIR~cond~``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#Stmt_eval-returnStatementIR">→ returnStatementIR</a>]</sub>+++
- .. +++<span class="bk-arm-anchor" id="bk-195-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-193-arm-1"></span>+++Try:
   ... If let ``abortResult`` of type ``abortResult`` be ``expressionResult``:
    .... The result is context ``EC~cond~``, state ``ARCH~cond~``, and ``abortResult``.
- .. +++<span class="bk-arm-anchor" id="bk-195-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-193-arm-2"></span>+++Then, try:
   ... If ``expressionResult`` is equal to ``{nbsp}~CONT~`` ``{nbsp}~B~`` ``true``:
    .... Let context ``EC~then~``, state ``ARCH~then~``, and ``statementResult`` be the result of xref:Stmt_eval[runtime evaluation of ``statementIR~then~``, under context ``EC~cond~`` and state ``ARCH~cond~`` at ``p``].+++<sub class="bk-mark">[<a href="#Stmt_eval-returnStatementIR">→ returnStatementIR</a>]</sub>+++
    .... The result is context ``EC~then~``, state ``ARCH~then~``, and ``statementResult``.
@@ -20339,10 +20319,10 @@ xref:Stmt_eval[Runtime evaluation of ``conditionalStatementIR``, under context `
 . Else:
  .. Let ``+IF+`` ``+`(+`` ``typedExpressionIR~cond~`` ``+`)+`` ``statementIR~then~`` ``+ELSE+`` ``statementIR~else~`` be ``conditionalStatementIR``.
  .. Let context ``EC~cond~``, state ``ARCH~cond~`` and ``expressionResult`` be the result of xref:Expr_eval[evaluating ``typedExpressionIR~cond~``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#Stmt_eval-returnStatementIR">→ returnStatementIR</a>]</sub>+++
- .. +++<span class="bk-arm-anchor" id="bk-196-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-194-arm-1"></span>+++Try:
   ... If let ``abortResult`` of type ``abortResult`` be ``expressionResult``:
    .... The result is context ``EC~cond~``, state ``ARCH~cond~``, and ``abortResult``.
- .. +++<span class="bk-arm-anchor" id="bk-196-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-194-arm-2"></span>+++Then, try:
   ... If ``expressionResult`` is equal to ``{nbsp}~CONT~`` ``{nbsp}~B~`` ``true``:
    .... Let context ``EC~then~``, state ``ARCH~then~``, and ``statementResult`` be the result of xref:Stmt_eval[runtime evaluation of ``statementIR~then~``, under context ``EC~cond~`` and state ``ARCH~cond~`` at ``p``].+++<sub class="bk-mark">[<a href="#Stmt_eval-returnStatementIR">→ returnStatementIR</a>]</sub>+++
    .... The result is context ``EC~then~``, state ``ARCH~then~``, and ``statementResult``.
@@ -20420,20 +20400,20 @@ xref:Stmt_eval[Runtime evaluation of ``+SWITCH+`` ``+`(+`` ``typedExpressionIR``
 
 Stmt_eval dispatch:
 
-. +++<span class="bk-arm-anchor" id="bk-193-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-191-arm-1"></span>+++Try:
  .. If let ``emptyStatement`` of type ``emptyStatement`` be ``statementIR'``: goto xref:Stmt_eval-emptyStatementIR[emptyStatementIR]
  .. Else if let ``typedLvalueIR`` ``assignop`` ``typedExpressionIR`` ``+';'+`` of type ``assignmentStatementIR`` be ``statementIR'``: goto xref:Stmt_eval-assignmentStatementIR[assignmentStatementIR]
  .. Else if let ``callableTargetIR`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` ``+';'+`` of type ``callStatementIR`` be ``statementIR'``: goto xref:Stmt_eval-callStatementIR[callStatementIR]
  .. Else if let ``exitStatement`` of type ``exitStatement`` be ``statementIR'``: goto xref:Stmt_eval-exitStatementIR[exitStatementIR]
  .. Else if let ``blockStatementIR`` of type ``blockStatementIR`` be ``statementIR'``: goto xref:Stmt_eval-blockStatementIR[blockStatementIR]
  .. Else if let ``conditionalStatementIR`` of type ``conditionalStatementIR`` be ``statementIR'``: goto xref:Stmt_eval-conditionalStatementIR[conditionalStatementIR]
-. +++<span class="bk-arm-anchor" id="bk-193-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-191-arm-2"></span>+++Then, try:
  .. Check that ``p`` is ``+LOCAL+``.
  .. If let ``returnStatementIR`` of type ``returnStatementIR`` be ``statementIR'``: goto xref:Stmt_eval-returnStatementIR[returnStatementIR]
  .. Else if let ``forStatementIR`` of type ``forStatementIR`` be ``statementIR'``:
-  ... +++<span class="bk-arm-anchor" id="bk-194-arm-1"></span>+++Try:
+  ... +++<span class="bk-arm-anchor" id="bk-192-arm-1"></span>+++Try:
    .... If let ``annotationList`` ``+FOR+`` ``+`(+`` ``forInitStatementListIR`` ``+';'+`` ``typedExpressionIR`` ``+';'+`` ``forUpdateStatementListIR`` ``+`)+`` ``statementIR`` be ``forStatementIR``: goto xref:Stmt_eval-forStatementIR-three-clause[forStatementIR-three-clause]
-  ... +++<span class="bk-arm-anchor" id="bk-194-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-192-arm-2"></span>+++Then, try:
    .... Goto xref:Stmt_eval-forStatementIR-in[forStatementIR-in]
  .. Else if let ``breakStatement`` of type ``breakStatement`` be ``statementIR'``: goto xref:Stmt_eval-breakStatementIR[breakStatementIR]
  .. Else if let ``continueStatement`` of type ``continueStatement`` be ``statementIR'``: goto xref:Stmt_eval-continueStatementIR[continueStatementIR]
@@ -20472,10 +20452,10 @@ xref:BlockElementStmtList_eval[Runtime evaluation of ``blockElementStatementIR^{
 . Else:
  .. Let ``blockElementStatementIR~h~`` ``{two-colons}`` ``blockElementStatementIR~t~^{asterisk}^`` be ``blockElementStatementIR^{asterisk}^``.
  .. Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be the result of xref:BlockElementStmt_eval[runtime evaluation of ``blockElementStatementIR~h~``, under context ``EC``, and state ``ARCH``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. +++<span class="bk-arm-anchor" id="bk-197-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-195-arm-1"></span>+++Try:
   ... If ``statementResult`` is not equal to ``{nbsp}~EMPTY~``:
    .... The result is context ``EC~1~``, state ``ARCH~1~``, and ``statementResult``.
- .. +++<span class="bk-arm-anchor" id="bk-197-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-195-arm-2"></span>+++Then, try:
   ... Check that ``statementResult`` has type ``continueEmptyResult``.
   ... Let ``continueEmptyResult`` be ``statementResult``.
   ... Let context ``EC~2~``, state ``ARCH~2~``, and ``statementResult'`` be the result of xref:BlockElementStmtList_eval[runtime evaluation of ``blockElementStatementIR~t~^{asterisk}^``, under context ``EC~1~``, and state ``ARCH~1~``].+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -20536,10 +20516,10 @@ xref:ParserStmt_eval[Runtime evaluation of ``parserConditionalStatementIR``, und
 
 . If let ``+IF+`` ``+`(+`` ``typedExpressionIR~cond~`` ``+`)+`` ``parserStatementIR~then~`` be ``parserConditionalStatementIR``:
  .. Let context ``EC~cond~``, state ``ARCH~cond~`` and ``expressionResult`` be the result of xref:Expr_eval[evaluating ``typedExpressionIR~cond~``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. +++<span class="bk-arm-anchor" id="bk-198-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-196-arm-1"></span>+++Try:
   ... If let ``rejectTransitionResult`` of type ``rejectTransitionResult`` be ``expressionResult``:
    .... The result is context ``EC~cond~``, state ``ARCH~cond~``, and ``rejectTransitionResult``.
- .. +++<span class="bk-arm-anchor" id="bk-198-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-196-arm-2"></span>+++Then, try:
   ... If ``expressionResult`` is equal to ``{nbsp}~CONT~`` ``{nbsp}~B~`` ``true``:
    .... Let context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult`` be the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~then~``, under context ``EC~cond~`` and state ``ARCH~cond~``].+++<sub class="bk-mark">[FAIL]</sub>+++
    .... The result is context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult``.
@@ -20548,10 +20528,10 @@ xref:ParserStmt_eval[Runtime evaluation of ``parserConditionalStatementIR``, und
 . Else:
  .. Let ``+IF+`` ``+`(+`` ``typedExpressionIR~cond~`` ``+`)+`` ``parserStatementIR~then~`` ``+ELSE+`` ``parserStatementIR~else~`` be ``parserConditionalStatementIR``.
  .. Let context ``EC~cond~``, state ``ARCH~cond~`` and ``expressionResult`` be the result of xref:Expr_eval[evaluating ``typedExpressionIR~cond~``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. +++<span class="bk-arm-anchor" id="bk-199-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-197-arm-1"></span>+++Try:
   ... If let ``rejectTransitionResult`` of type ``rejectTransitionResult`` be ``expressionResult``:
    .... The result is context ``EC~cond~``, state ``ARCH~cond~``, and ``rejectTransitionResult``.
- .. +++<span class="bk-arm-anchor" id="bk-199-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-197-arm-2"></span>+++Then, try:
   ... If ``expressionResult`` is equal to ``{nbsp}~CONT~`` ``{nbsp}~B~`` ``true``:
    .... Let context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult`` be the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~then~``, under context ``EC~cond~`` and state ``ARCH~cond~``].+++<sub class="bk-mark">[FAIL]</sub>+++
    .... The result is context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult``.
@@ -20603,10 +20583,10 @@ xref:ParserBlockElementStmtList_eval[Runtime evaluation of ``parserBlockElementS
 . Else:
  .. Let ``parserBlockElementStatementIR~h~`` ``{two-colons}`` ``parserBlockElementStatementIR~t~^{asterisk}^`` be ``parserBlockElementStatementIR^{asterisk}^``.
  .. Let context ``EC~1~``, state ``ARCH~1~``, and ``parserStatementResult`` be the result of xref:ParserBlockElementStmt_eval[runtime evaluation of ``parserBlockElementStatementIR~h~``, under context ``EC``, and state ``ARCH``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. +++<span class="bk-arm-anchor" id="bk-200-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-198-arm-1"></span>+++Try:
   ... If ``parserStatementResult`` is not equal to ``{nbsp}~EMPTY~``:
    .... The result is context ``EC~1~``, state ``ARCH~1~``, and ``parserStatementResult``.
- .. +++<span class="bk-arm-anchor" id="bk-200-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-198-arm-2"></span>+++Then, try:
   ... Check that ``parserStatementResult`` has type ``continueEmptyResult``.
   ... Let ``continueEmptyResult`` be ``parserStatementResult``.
   ... Let context ``EC~2~``, state ``ARCH~2~``, and ``parserStatementResult'`` be the result of xref:ParserBlockElementStmtList_eval[runtime evaluation of ``parserBlockElementStatementIR~t~^{asterisk}^``, under context ``EC~1~``, and state ``ARCH~1~``].+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -20664,13 +20644,13 @@ xref:ParserTransition_eval[ParserTransition_eval]:
 xref:ParserTransition_eval[Runtime evaluation of ``+TRANSITION+`` ``stateExpressionIR``, under context ``EC`` and state ``ARCH``]:
 
 . If let ``nameIR`` ``+';'+`` be ``stateExpressionIR``:
- .. +++<span class="bk-arm-anchor" id="bk-201-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-199-arm-1"></span>+++Try:
   ... If ``nameIR`` is equal to ``"accept"``:
    .... The result is context ``EC``, state ``ARCH``, and ``+ACCEPT+``.
   ... Else if ``nameIR`` is equal to ``"reject"``:
    .... Let ``errorValue`` be ``+ERROR+`` ``+'.'+`` ``"NoError"``.
    .... The result is context ``EC``, state ``ARCH``, and ``+REJECT+`` ``errorValue``.
- .. +++<span class="bk-arm-anchor" id="bk-201-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-199-arm-2"></span>+++Then, try:
   ... Check that ``nameIR`` is not equal to ``"accept"`` and ``nameIR`` is not equal to ``"reject"``.
   ... The result is context ``EC``, state ``ARCH``, and ``+STATE+`` ``nameIR``.
 . Else:
@@ -20809,12 +20789,12 @@ xref:ControlBody_eval[ControlBody_eval]:
 xref:ControlBody_eval[Evaluating ``controlBodyIR``, under context ``EC~0~``, and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be the result of xref:Block_eval[runtime evaluation of ``controlBodyIR``, under context ``EC~0~``, and state ``ARCH~0~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. +++<span class="bk-arm-anchor" id="bk-202-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-200-arm-1"></span>+++Try:
  .. If let ``continueEmptyResult`` of type ``continueEmptyResult`` be ``statementResult``:
   ... The result is context ``EC~1~``, state ``ARCH~1~``, and result ``+RETURN+`` ``·``.
  .. Else if let ``exitResult`` of type ``exitResult`` be ``statementResult``:
   ... The result is context ``EC~1~``, state ``ARCH~1~``, and result ``+EXIT+``.
-. +++<span class="bk-arm-anchor" id="bk-202-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-200-arm-2"></span>+++Then, try:
  .. Check that ``statementResult`` is equal to ``+RETURN+`` ``·``.
  .. The result is context ``EC~1~``, state ``ARCH~1~``, and result ``+RETURN+`` ``·``.
 
@@ -20915,7 +20895,7 @@ xref:Callee_eval[Finding callee ``referenceExpressionIR`` ``+`(+`` ``argumentLis
 . If ``callResolution<(cursor,`` ``callableDef)>^?^`` is defined:
  .. Let ``++_++`` ``+':'+`` ``(cursor,`` ``callableDef)`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``++_++^{asterisk}^`` be ``callResolution<(cursor,`` ``callableDef)>^?^``.
  .. If let ``(`` ``p~ref~,`` ``actionDef`` ``)`` of type ``(cursor,`` ``actionDef)`` be ``(cursor,`` ``callableDef)``:
-  ... Let ``++_++`` ``+ACTION+`` ``nameIR`` ``+`(+`` ``parameterListIR`` ``+`)+`` ``blockStatementIR`` be ``actionDef``.
+  ... Let ``++_++`` ``+ACTION+`` ``nameIR`` ``++_++`` ``+`(+`` ``parameterListIR`` ``+`)+`` ``blockStatementIR`` be ``actionDef``.
   ... Let ``actionCallee`` be ``+ACTION+`` ``p~ref~`` ``+'.'+`` ``nameIR`` ``+`(+`` ``parameterListIR`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+`)+`` ``blockStatementIR``.
   ... The result is context ``EC``, state ``ARCH``, and callee ``{nbsp}~CONT~`` ``actionCallee``.
 
@@ -20941,14 +20921,14 @@ xref:Callee_eval[Finding callee ``referenceExpressionIR`` ``+`(+`` ``argumentLis
 
 xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+'.'+`` ``"push_front"`` ``+`(+`` ``argumentListIR`` ``+`)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
-. +++<span class="bk-arm-anchor" id="bk-207-arm-1"></span>+++Try:
- .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-207-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-205-arm-1"></span>+++Try:
+ .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-205-arm-2">→ 2</a>]</sub>+++
  .. If ``typedLvalueIR'^?^`` is defined:
   ... Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
-  ... Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-207-arm-2">→ 2</a>]</sub>+++
+  ... Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-205-arm-2">→ 2</a>]</sub>+++
   ... If let ``abortResult`` of type ``abortResult`` be ``storageReferenceResult``:
    .... The result is context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
-. +++<span class="bk-arm-anchor" id="bk-207-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-205-arm-2"></span>+++Then, try:
  .. If ``argumentListIR`` is a list of length 1:
   ... Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#Callee_eval-builtinSizeMethodCallee">→ builtinSizeMethodCallee</a>]</sub>+++
   ... If ``typedLvalueIR'^?^`` is defined:
@@ -20962,14 +20942,14 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+'.'+`` ``"push_front"``
 
 xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+'.'+`` ``"pop_front"`` ``+`(+`` ``argumentListIR`` ``+`)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
-. +++<span class="bk-arm-anchor" id="bk-208-arm-1"></span>+++Try:
- .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-208-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-206-arm-1"></span>+++Try:
+ .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-206-arm-2">→ 2</a>]</sub>+++
  .. If ``typedLvalueIR'^?^`` is defined:
   ... Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
-  ... Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-208-arm-2">→ 2</a>]</sub>+++
+  ... Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-206-arm-2">→ 2</a>]</sub>+++
   ... If let ``abortResult`` of type ``abortResult`` be ``storageReferenceResult``:
    .... The result is context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
-. +++<span class="bk-arm-anchor" id="bk-208-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-206-arm-2"></span>+++Then, try:
  .. If ``argumentListIR`` is a list of length 1:
   ... Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#Callee_eval-builtinSizeMethodCallee">→ builtinSizeMethodCallee</a>]</sub>+++
   ... If ``typedLvalueIR'^?^`` is defined:
@@ -20983,14 +20963,14 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+'.'+`` ``"pop_front"`` 
 
 xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+'.'+`` ``"isValid"`` ``+`(+`` ``argumentListIR`` ``+`)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
-. +++<span class="bk-arm-anchor" id="bk-209-arm-1"></span>+++Try:
- .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-209-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-207-arm-1"></span>+++Try:
+ .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-207-arm-2">→ 2</a>]</sub>+++
  .. If ``typedLvalueIR'^?^`` is defined:
   ... Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
-  ... Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-209-arm-2">→ 2</a>]</sub>+++
+  ... Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-207-arm-2">→ 2</a>]</sub>+++
   ... If let ``abortResult`` of type ``abortResult`` be ``storageReferenceResult``:
    .... The result is context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
-. +++<span class="bk-arm-anchor" id="bk-209-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-207-arm-2"></span>+++Then, try:
  .. If ``argumentListIR`` is an empty list:
   ... Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#Callee_eval-builtinSizeMethodCallee">→ builtinSizeMethodCallee</a>]</sub>+++
   ... If ``typedLvalueIR'^?^`` is defined:
@@ -21004,14 +20984,14 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+'.'+`` ``"isValid"`` ``
 
 xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+'.'+`` ``"setValid"`` ``+`(+`` ``argumentListIR`` ``+`)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
-. +++<span class="bk-arm-anchor" id="bk-210-arm-1"></span>+++Try:
- .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-210-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-208-arm-1"></span>+++Try:
+ .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-208-arm-2">→ 2</a>]</sub>+++
  .. If ``typedLvalueIR'^?^`` is defined:
   ... Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
-  ... Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-210-arm-2">→ 2</a>]</sub>+++
+  ... Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-208-arm-2">→ 2</a>]</sub>+++
   ... If let ``abortResult`` of type ``abortResult`` be ``storageReferenceResult``:
    .... The result is context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
-. +++<span class="bk-arm-anchor" id="bk-210-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-208-arm-2"></span>+++Then, try:
  .. If ``argumentListIR`` is an empty list:
   ... Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#Callee_eval-builtinSizeMethodCallee">→ builtinSizeMethodCallee</a>]</sub>+++
   ... If ``typedLvalueIR'^?^`` is defined:
@@ -21025,14 +21005,14 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+'.'+`` ``"setValid"`` `
 
 xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+'.'+`` ``"setInvalid"`` ``+`(+`` ``argumentListIR`` ``+`)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
-. +++<span class="bk-arm-anchor" id="bk-211-arm-1"></span>+++Try:
- .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-211-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-209-arm-1"></span>+++Try:
+ .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-209-arm-2">→ 2</a>]</sub>+++
  .. If ``typedLvalueIR'^?^`` is defined:
   ... Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
-  ... Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-211-arm-2">→ 2</a>]</sub>+++
+  ... Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-209-arm-2">→ 2</a>]</sub>+++
   ... If let ``abortResult`` of type ``abortResult`` be ``storageReferenceResult``:
    .... The result is context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
-. +++<span class="bk-arm-anchor" id="bk-211-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-209-arm-2"></span>+++Then, try:
  .. If ``argumentListIR`` is an empty list:
   ... Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#Callee_eval-builtinSizeMethodCallee">→ builtinSizeMethodCallee</a>]</sub>+++
   ... If ``typedLvalueIR'^?^`` is defined:
@@ -21160,13 +21140,13 @@ xref:Callee_eval[Finding callee ``+`(+`` ``callableTargetIR`` ``+`)+`` ``+`(+`` 
 
 Callee_eval dispatch:
 
-. +++<span class="bk-arm-anchor" id="bk-203-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-201-arm-1"></span>+++Try:
  .. If let ``referenceExpressionIR`` of type ``referenceExpressionIR`` be ``callableTargetIR'``:
-  ... +++<span class="bk-arm-anchor" id="bk-204-arm-1"></span>+++Try:
+  ... +++<span class="bk-arm-anchor" id="bk-202-arm-1"></span>+++Try:
    .... Goto xref:Callee_eval-actionCallee[actionCallee]
-  ... +++<span class="bk-arm-anchor" id="bk-204-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-202-arm-2"></span>+++Then, try:
    .... Goto xref:Callee_eval-externFunctionCallee[externFunctionCallee]
-  ... +++<span class="bk-arm-anchor" id="bk-204-arm-3"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-202-arm-3"></span>+++Then, try:
    .... Goto xref:Callee_eval-definedFunctionCallee[definedFunctionCallee]
  .. Else if let ``typedExpressionIR`` ``+'.'+`` ``t`` be ``callableTargetIR'``:
   ... If ``t`` is equal to ``"push_front"``: goto xref:Callee_eval-builtinPushFrontMethodCallee[builtinPushFrontMethodCallee]
@@ -21174,26 +21154,26 @@ Callee_eval dispatch:
   ... Else if ``t`` is equal to ``"isValid"``: goto xref:Callee_eval-builtinIsValidMethodCallee[builtinIsValidMethodCallee]
   ... Else if ``t`` is equal to ``"setValid"``: goto xref:Callee_eval-builtinSetValidMethodCallee[builtinSetValidMethodCallee]
   ... Else if ``t`` is equal to ``"setInvalid"``: goto xref:Callee_eval-builtinSetInvalidMethodCallee[builtinSetInvalidMethodCallee]
-. +++<span class="bk-arm-anchor" id="bk-203-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-201-arm-2"></span>+++Then, try:
  .. Let ``argumentIR^{asterisk}^`` be ``argumentListIR``.
  .. If let ``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` be ``callableTargetIR'``:
   ... If ``argumentIR^{asterisk}^`` is an empty list: goto xref:Callee_eval-builtinSizeMethodCallee[builtinSizeMethodCallee]
-. +++<span class="bk-arm-anchor" id="bk-203-arm-3"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-201-arm-3"></span>+++Then, try:
  .. If let ``typedExpressionIR`` ``+'.'+`` ``nameIR`` be ``callableTargetIR'``:
-  ... +++<span class="bk-arm-anchor" id="bk-205-arm-1"></span>+++Try:
+  ... +++<span class="bk-arm-anchor" id="bk-203-arm-1"></span>+++Try:
    .... Goto xref:Callee_eval-externMethodCallee[externMethodCallee]
-  ... +++<span class="bk-arm-anchor" id="bk-205-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-203-arm-2"></span>+++Then, try:
    .... If ``nameIR`` is equal to ``"apply"``:
-    ..... +++<span class="bk-arm-anchor" id="bk-206-arm-1"></span>+++Try:
+    ..... +++<span class="bk-arm-anchor" id="bk-204-arm-1"></span>+++Try:
      ...... Goto xref:Callee_eval-parserApplyMethodCallee[parserApplyMethodCallee]
-    ..... +++<span class="bk-arm-anchor" id="bk-206-arm-2"></span>+++Then, try:
+    ..... +++<span class="bk-arm-anchor" id="bk-204-arm-2"></span>+++Then, try:
      ...... Goto xref:Callee_eval-controlApplyMethodCallee[controlApplyMethodCallee]
-. +++<span class="bk-arm-anchor" id="bk-203-arm-4"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-201-arm-4"></span>+++Then, try:
  .. Let ``argumentIR^{asterisk}^`` be ``argumentListIR``.
  .. If let ``typedExpressionIR`` ``+'.'+`` ``t`` be ``callableTargetIR'``:
   ... If ``t`` is equal to ``"apply"``:
    .... If ``argumentIR^{asterisk}^`` is an empty list: goto xref:Callee_eval-tableApplyMethodCallee[tableApplyMethodCallee]
-. +++<span class="bk-arm-anchor" id="bk-203-arm-5"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-201-arm-5"></span>+++Then, try:
  .. Check that ``callableTargetIR'`` matches pattern ``+`(+`` ``%`` ``+`)+``.
  .. Let ``+`(+`` ``callableTargetIR`` ``+`)+`` be ``callableTargetIR'``.
  .. Goto xref:Callee_eval-parenthesized[parenthesized]
@@ -21269,9 +21249,9 @@ xref:Copy_in_arg[Copy-in from ``argumentIR`` at ``p~callee~`` of ``EC~callee_0~`
 
 Copy_in_arg dispatch:
 
-. +++<span class="bk-arm-anchor" id="bk-212-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-210-arm-1"></span>+++Try:
  .. Goto xref:Copy_in_arg-directionless-in[directionless-in]
-. +++<span class="bk-arm-anchor" id="bk-212-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-210-arm-2"></span>+++Then, try:
  .. If ``direction`` matches pattern ``+INOUT+``: goto xref:Copy_in_arg-inout[inout]
  .. Else if ``direction`` matches pattern ``+OUT+``: goto xref:Copy_in_arg-out[out]
 
@@ -21386,9 +21366,9 @@ xref:Copy_out_argument[Copy-out from ``p~callee~`` at ``EC~caller_0~`` of ``anno
 
 Copy_out_argument dispatch:
 
-. +++<span class="bk-arm-anchor" id="bk-213-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-211-arm-1"></span>+++Try:
  .. If ``storageReference'^?^`` is none: goto xref:Copy_out_argument-in-directionless[in-directionless]
-. +++<span class="bk-arm-anchor" id="bk-213-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-211-arm-2"></span>+++Then, try:
  .. Goto xref:Copy_out_argument-out-inout[out-inout]
 
 xref:Copy_out[Copy_out]:
@@ -21421,11 +21401,11 @@ xref:Call_eval[Calling ``actionCallee`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``argu
 . Else if let ``{nbsp}~CONT~`` ``storageReference^?^^{asterisk}^`` of type ``continueResult<storageReference?*>`` be ``copyInResult``:
  .. Let ``EC~callee_2~`` be the result of xref:Copy_in_default[copying defaults for ``parameterIR~default~^{asterisk}^``, under context ``+LOCAL+`` and context ``EC~callee_1~``].+++<sub class="bk-mark">[<a href="#Call_eval-externFunctionCallee">→ externFunctionCallee</a>]</sub>+++
  .. Let context ``EC~callee_3~``, state ``ARCH~2~`` and result ``actionResult`` be the result of xref:ActionBody_eval[evaluating action body ``blockStatementIR``, under context ``EC~callee_2~`` and state ``ARCH~1~``].+++<sub class="bk-mark">[<a href="#Call_eval-externFunctionCallee">→ externFunctionCallee</a>]</sub>+++
- .. +++<span class="bk-arm-anchor" id="bk-217-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-215-arm-1"></span>+++Try:
   ... If let ``exitResult`` of type ``exitResult`` be ``actionResult``:
-   .... Let ``EC~2~`` be the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_3~``, under state ``ARCH~2~`` at shared ``p~shared~``].+++<sub class="bk-mark">[<a href="#bk-217-arm-2">→ d</a>]</sub>+++
+   .... Let ``EC~2~`` be the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_3~``, under state ``ARCH~2~`` at shared ``p~shared~``].+++<sub class="bk-mark">[<a href="#bk-215-arm-2">→ d</a>]</sub>+++
    .... The result is context ``EC~2~``, state ``ARCH~2~``, and call result ``+EXIT+``.
- .. +++<span class="bk-arm-anchor" id="bk-217-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-215-arm-2"></span>+++Then, try:
   ... If ``actionResult`` is equal to ``+RETURN+`` ``·``:
    .... Let ``EC~2~`` be the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_3~``, under state ``ARCH~2~`` at shared ``p~shared~``].+++<sub class="bk-mark">[<a href="#Call_eval-externFunctionCallee">→ externFunctionCallee</a>]</sub>+++
    .... The result is context ``EC~2~``, state ``ARCH~2~``, and call result ``+RETURN+`` ``·``.
@@ -21483,11 +21463,11 @@ xref:Call_eval[Calling ``builtinPushFrontMethodCallee`` ``+`<+`` ``·`` ``+`>+``
 . Let value ``value`` be the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].+++<sub class="bk-mark">[<a href="#Call_eval-builtinIsValidMethodCallee-header">→ builtinIsValidMethodCallee-header</a>]</sub>+++
 . If let ``headerStackValue`` of type ``headerStackValue`` be ``value``:
  .. Let ``+HEADER_STACK+`` ``+`[+`` ``value~element~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+`)+`` ``+`]+`` be ``headerStackValue``.
- .. +++<span class="bk-arm-anchor" id="bk-218-arm-1"></span>+++Try:
-  ... Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].+++<sub class="bk-mark">[<a href="#bk-218-arm-2">→ c</a>]</sub>+++
+ .. +++<span class="bk-arm-anchor" id="bk-216-arm-1"></span>+++Try:
+  ... Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].+++<sub class="bk-mark">[<a href="#bk-216-arm-2">→ c</a>]</sub>+++
   ... If let ``abortResult`` of type ``abortResult`` be ``expressionResult``:
    .... The result is context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
- .. +++<span class="bk-arm-anchor" id="bk-218-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-216-arm-2"></span>+++Then, try:
   ... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
   ... Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].+++<sub class="bk-mark">[<a href="#Call_eval-builtinIsValidMethodCallee-header">→ builtinIsValidMethodCallee-header</a>]</sub>+++
   ... If let ``{nbsp}~CONT~`` ``value'`` of type ``continueResult<value>`` be ``expressionResult``:
@@ -21495,27 +21475,27 @@ xref:Call_eval[Calling ``builtinPushFrontMethodCallee`` ``+`<+`` ``·`` ``+`>+``
     ..... Let ``nat^?^`` be xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].+++<sub class="bk-mark">[<a href="#Call_eval-builtinIsValidMethodCallee-header">→ builtinIsValidMethodCallee-header</a>]</sub>+++
     ..... If ``nat^?^`` is defined:
      ...... Let ``n~count~`` be ``nat^?^``.
-     ...... +++<span class="bk-arm-anchor" id="bk-219-arm-1"></span>+++Try:
+     ...... +++<span class="bk-arm-anchor" id="bk-217-arm-1"></span>+++Try:
       ....... If ``n~count~`` is less than ``n~size~``:
        ........ If ``0`` ``{plus}`` ``n~count~`` is less than or equal to the length of ``value~element~^{asterisk}^``:
         ......... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
-        ......... For each ``value~front~`` in ``value~front~^{asterisk}^``:+++<sub class="bk-mark">[<a href="#bk-219-arm-2">→ 3</a>]</sub>+++
+        ......... For each ``value~front~`` in ``value~front~^{asterisk}^``:+++<sub class="bk-mark">[<a href="#bk-217-arm-2">→ 3</a>]</sub>+++
 +
 --
          ********** Let ``value~front_invalidated~`` be xref:invalidate_value[``$invalidate_value(value~front~)``].
 --
 +
 Let ``value~front_invalidated~^{asterisk}^`` be the resulting list.
-        ......... Let ``i`` be <<max_int,max``+`(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+`)+``>>.+++<sub class="bk-mark">[<a href="#bk-219-arm-2">→ 3</a>]</sub>+++
+        ......... Let ``i`` be <<max_int,max``+`(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+`)+``>>.+++<sub class="bk-mark">[<a href="#bk-217-arm-2">→ 3</a>]</sub>+++
         ......... If let ``n~back~`` of type ``nat`` be ``i``:
          .......... If ``0`` ``{plus}`` ``n~back~`` is less than or equal to the length of ``value~element~^{asterisk}^``:
           ........... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.
           ........... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.
-          ........... Let ``n~idx_updated~`` be <<min_nat,min``+`(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``{plus}`` ``n~count~`` ``+]+`` ``+`)+``>>.+++<sub class="bk-mark">[<a href="#bk-219-arm-2">→ 3</a>]</sub>+++
+          ........... Let ``n~idx_updated~`` be <<min_nat,min``+`(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``{plus}`` ``n~count~`` ``+]+`` ``+`)+``>>.+++<sub class="bk-mark">[<a href="#bk-217-arm-2">→ 3</a>]</sub>+++
           ........... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_updated~^{asterisk}^`` ``+`(+`` ``n~idx_updated~`` ``+`)+`` ``+`]+``.
-          ........... Let context ``EC~2~`` be the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-219-arm-2">→ 3</a>]</sub>+++
+          ........... Let context ``EC~2~`` be the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-217-arm-2">→ 3</a>]</sub>+++
           ........... The result is context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
-     ...... +++<span class="bk-arm-anchor" id="bk-219-arm-2"></span>+++Then, try:
+     ...... +++<span class="bk-arm-anchor" id="bk-217-arm-2"></span>+++Then, try:
       ....... If ``n~count~`` is greater than or equal to ``n~size~``:
        ........ For each ``value~element~`` in ``value~element~^{asterisk}^``:+++<sub class="bk-mark">[<a href="#Call_eval-builtinIsValidMethodCallee-header">→ builtinIsValidMethodCallee-header</a>]</sub>+++
 +
@@ -21535,11 +21515,11 @@ xref:Call_eval[Calling ``builtinPopFrontMethodCallee`` ``+`<+`` ``·`` ``+`>+`` 
 . Let value ``value`` be the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].+++<sub class="bk-mark">[<a href="#Call_eval-builtinIsValidMethodCallee-header">→ builtinIsValidMethodCallee-header</a>]</sub>+++
 . If let ``headerStackValue`` of type ``headerStackValue`` be ``value``:
  .. Let ``+HEADER_STACK+`` ``+`[+`` ``value~element~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+`)+`` ``+`]+`` be ``headerStackValue``.
- .. +++<span class="bk-arm-anchor" id="bk-220-arm-1"></span>+++Try:
-  ... Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].+++<sub class="bk-mark">[<a href="#bk-220-arm-2">→ c</a>]</sub>+++
+ .. +++<span class="bk-arm-anchor" id="bk-218-arm-1"></span>+++Try:
+  ... Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].+++<sub class="bk-mark">[<a href="#bk-218-arm-2">→ c</a>]</sub>+++
   ... If let ``abortResult`` of type ``abortResult`` be ``expressionResult``:
    .... The result is context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
- .. +++<span class="bk-arm-anchor" id="bk-220-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-218-arm-2"></span>+++Then, try:
   ... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
   ... Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].+++<sub class="bk-mark">[<a href="#Call_eval-builtinIsValidMethodCallee-header">→ builtinIsValidMethodCallee-header</a>]</sub>+++
   ... If let ``{nbsp}~CONT~`` ``value'`` of type ``continueResult<value>`` be ``expressionResult``:
@@ -21547,15 +21527,15 @@ xref:Call_eval[Calling ``builtinPopFrontMethodCallee`` ``+`<+`` ``·`` ``+`>+`` 
     ..... Let ``nat^?^`` be xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].+++<sub class="bk-mark">[<a href="#Call_eval-builtinIsValidMethodCallee-header">→ builtinIsValidMethodCallee-header</a>]</sub>+++
     ..... If ``nat^?^`` is defined:
      ...... Let ``n~count~`` be ``nat^?^``.
-     ...... +++<span class="bk-arm-anchor" id="bk-221-arm-1"></span>+++Try:
+     ...... +++<span class="bk-arm-anchor" id="bk-219-arm-1"></span>+++Try:
       ....... If ``n~count~`` is less than ``n~size~``:
-       ........ Let ``i`` be <<max_int,max``+`(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+`)+``>>.+++<sub class="bk-mark">[<a href="#bk-221-arm-2">→ 3</a>]</sub>+++
+       ........ Let ``i`` be <<max_int,max``+`(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+`)+``>>.+++<sub class="bk-mark">[<a href="#bk-219-arm-2">→ 3</a>]</sub>+++
        ........ If let ``n~front~`` of type ``nat`` be ``i``:
         ......... If ``n~count~`` ``{plus}`` ``n~front~`` is less than or equal to the length of ``value~element~^{asterisk}^``:
          .......... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.
          .......... If ``0`` ``{plus}`` ``n~count~`` is less than or equal to the length of ``value~element~^{asterisk}^``:
           ........... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
-          ........... For each ``value~back~`` in ``value~back~^{asterisk}^``:+++<sub class="bk-mark">[<a href="#bk-221-arm-2">→ 3</a>]</sub>+++
+          ........... For each ``value~back~`` in ``value~back~^{asterisk}^``:+++<sub class="bk-mark">[<a href="#bk-219-arm-2">→ 3</a>]</sub>+++
 +
 --
            ************ Let ``value~back_invalidated~`` be xref:invalidate_value[``$invalidate_value(value~back~)``].
@@ -21564,9 +21544,9 @@ xref:Call_eval[Calling ``builtinPopFrontMethodCallee`` ``+`<+`` ``·`` ``+`>+`` 
 Let ``value~back_invalidated~^{asterisk}^`` be the resulting list.
           ........... Let ``value~element_updated~^{asterisk}^`` be ``value~front~^{asterisk}^`` concatenated with ``value~back_invalidated~^{asterisk}^``.
           ........... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_updated~^{asterisk}^`` ``+`(+`` ``n~front~`` ``+`)+`` ``+`]+``.
-          ........... Let context ``EC~2~`` be the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-221-arm-2">→ 3</a>]</sub>+++
+          ........... Let context ``EC~2~`` be the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-219-arm-2">→ 3</a>]</sub>+++
           ........... The result is context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
-     ...... +++<span class="bk-arm-anchor" id="bk-221-arm-2"></span>+++Then, try:
+     ...... +++<span class="bk-arm-anchor" id="bk-219-arm-2"></span>+++Then, try:
       ....... If ``n~count~`` is greater than or equal to ``n~size~``:
        ........ For each ``value~element~`` in ``value~element~^{asterisk}^``:+++<sub class="bk-mark">[<a href="#Call_eval-builtinIsValidMethodCallee-header">→ builtinIsValidMethodCallee-header</a>]</sub>+++
 +
@@ -21739,11 +21719,11 @@ xref:Call_eval[Calling ``controlApplyMethodCallee`` ``+`<+`` ``typeArgumentListI
  .. Else:
   ... Let ``continueEmptyResult`` be ``controlLocalDeclarationResult``.
   ... Let context ``EC~callee_5~``, state ``ARCH~3~``, and result ``controlBodyResult`` be the result of xref:ControlBody_eval[evaluating ``controlBodyIR``, under context ``EC~callee_4~``, and state ``ARCH~2~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... +++<span class="bk-arm-anchor" id="bk-222-arm-1"></span>+++Try:
+  ... +++<span class="bk-arm-anchor" id="bk-220-arm-1"></span>+++Try:
    .... If let ``exitResult`` of type ``exitResult`` be ``controlBodyResult``:
-    ..... Let ``EC~2~`` be the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+BLOCK+`` of ``EC~callee_5~``, under state ``ARCH~3~`` at shared ``p~shared~``].+++<sub class="bk-mark">[<a href="#bk-222-arm-2">→ iv</a>]</sub>+++
+    ..... Let ``EC~2~`` be the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+BLOCK+`` of ``EC~callee_5~``, under state ``ARCH~3~`` at shared ``p~shared~``].+++<sub class="bk-mark">[<a href="#bk-220-arm-2">→ iv</a>]</sub>+++
     ..... The result is context ``EC~2~``, state ``ARCH~3~``, and call result ``+EXIT+``.
-  ... +++<span class="bk-arm-anchor" id="bk-222-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-220-arm-2"></span>+++Then, try:
    .... Check that ``controlBodyResult`` is equal to ``+RETURN+`` ``·``.
    .... Let ``EC~2~`` be the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+BLOCK+`` of ``EC~callee_5~``, under state ``ARCH~3~`` at shared ``p~shared~``].+++<sub class="bk-mark">[FAIL]</sub>+++
    .... The result is context ``EC~2~``, state ``ARCH~3~``, and call result ``+RETURN+`` ``·``.
@@ -21767,30 +21747,30 @@ xref:Call_eval[Calling ``tableApplyMethodCallee`` ``+`<+`` ``typeArgumentListIR`
 
 Call_eval dispatch:
 
-. +++<span class="bk-arm-anchor" id="bk-214-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-212-arm-1"></span>+++Try:
  .. Let ``typeArgumentIR^{asterisk}^`` be ``typeArgumentListIR``.
- .. +++<span class="bk-arm-anchor" id="bk-215-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-213-arm-1"></span>+++Try:
   ... If let ``actionCallee`` of type ``actionCallee`` be ``callee``:
    .... If ``typeArgumentIR^{asterisk}^`` is an empty list: goto xref:Call_eval-actionCallee[actionCallee]
   ... Else if let ``definedFunctionCallee`` of type ``definedFunctionCallee`` be ``callee``: goto xref:Call_eval-definedFunctionCallee[definedFunctionCallee]
- .. +++<span class="bk-arm-anchor" id="bk-215-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-213-arm-2"></span>+++Then, try:
   ... Let ``argumentIR^{asterisk}^`` be ``argumentListIR``.
   ... If let ``externFunctionCallee`` of type ``externFunctionCallee`` be ``callee``: goto xref:Call_eval-externFunctionCallee[externFunctionCallee]
- .. +++<span class="bk-arm-anchor" id="bk-215-arm-3"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-213-arm-3"></span>+++Then, try:
   ... If let ``builtinPushFrontMethodCallee`` of type ``builtinPushFrontMethodCallee`` be ``callee``:
    .... If ``typeArgumentIR^{asterisk}^`` is an empty list:
     ..... If let ``+[+argumentIR+]+`` be ``argumentListIR``: goto xref:Call_eval-builtinPushFrontMethodCallee[builtinPushFrontMethodCallee]
   ... Else if let ``builtinPopFrontMethodCallee`` of type ``builtinPopFrontMethodCallee`` be ``callee``:
    .... If ``typeArgumentIR^{asterisk}^`` is an empty list:
     ..... If let ``+[+argumentIR+]+`` be ``argumentListIR``: goto xref:Call_eval-builtinPopFrontMethodCallee[builtinPopFrontMethodCallee]
- .. +++<span class="bk-arm-anchor" id="bk-215-arm-4"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-213-arm-4"></span>+++Then, try:
   ... Let ``argumentIR^{asterisk}^`` be ``argumentListIR``.
   ... If let ``builtinIsValidMethodCallee`` of type ``builtinIsValidMethodCallee`` be ``callee``:
    .... If ``typeArgumentIR^{asterisk}^`` is an empty list:
     ..... If ``argumentIR^{asterisk}^`` is an empty list:
-     ...... +++<span class="bk-arm-anchor" id="bk-216-arm-1"></span>+++Try:
+     ...... +++<span class="bk-arm-anchor" id="bk-214-arm-1"></span>+++Try:
       ....... Goto xref:Call_eval-builtinIsValidMethodCallee-header[builtinIsValidMethodCallee-header]
-     ...... +++<span class="bk-arm-anchor" id="bk-216-arm-2"></span>+++Then, try:
+     ...... +++<span class="bk-arm-anchor" id="bk-214-arm-2"></span>+++Then, try:
       ....... Goto xref:Call_eval-builtinIsValidMethodCallee-header-union[builtinIsValidMethodCallee-header-union]
   ... Else if let ``builtinSetValidMethodCallee`` of type ``builtinSetValidMethodCallee`` be ``callee``:
    .... If ``typeArgumentIR^{asterisk}^`` is an empty list:
@@ -21802,7 +21782,7 @@ Call_eval dispatch:
    .... If ``typeArgumentIR^{asterisk}^`` is an empty list:
     ..... If ``argumentIR^{asterisk}^`` is an empty list: goto xref:Call_eval-builtinSizeMethodCallee[builtinSizeMethodCallee]
   ... Else if let ``externMethodCallee`` of type ``externMethodCallee`` be ``callee``: goto xref:Call_eval-externMethodCallee[externMethodCallee]
-. +++<span class="bk-arm-anchor" id="bk-214-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-212-arm-2"></span>+++Then, try:
  .. If let ``parserApplyMethodCallee`` of type ``parserApplyMethodCallee`` be ``callee``: goto xref:Call_eval-parserApplyMethodCallee[parserApplyMethodCallee]
  .. Else if let ``controlApplyMethodCallee`` of type ``controlApplyMethodCallee`` be ``callee``: goto xref:Call_eval-controlApplyMethodCallee[controlApplyMethodCallee]
  .. Else if let ``tableApplyMethodCallee`` of type ``tableApplyMethodCallee`` be ``callee``: goto xref:Call_eval-tableApplyMethodCallee[tableApplyMethodCallee]
@@ -21819,7 +21799,7 @@ xref:ExternMethodCall_eval[ExternMethodCall_eval]:
 
 xref:match_keysets[``value^{asterisk}^`` matches ``setValue'^{asterisk}^``]
 
-. +++<span class="bk-arm-anchor" id="bk-223-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-221-arm-1"></span>+++Try:
  .. If ``setValue'^{asterisk}^`` matches pattern ``[]``:
   ... If ``value^{asterisk}^`` is an empty list: return ``true``.
  .. Else if ``setValue'^{asterisk}^`` matches pattern ``[`` ``_/1`` ``]``:
@@ -21827,10 +21807,10 @@ xref:match_keysets[``value^{asterisk}^`` matches ``setValue'^{asterisk}^``]
   ... If ``value^{asterisk}^`` is a list of length 1:
    .... Let ``value~key~`` be ``value^{asterisk}^``.
    .... If ``setValue`` does not match pattern ``+SET+`` ``+`{+`` ``+'...'+`` ``+`}+``:
-    ..... Return xref:match_keyset[``$match_keyset(setValue,`` ``value~key~)``].+++<sub class="bk-mark">[<a href="#bk-223-arm-2">→ 2</a>]</sub>+++
-. +++<span class="bk-arm-anchor" id="bk-223-arm-2"></span>+++Then, try:
+    ..... Return xref:match_keyset[``$match_keyset(setValue,`` ``value~key~)``].+++<sub class="bk-mark">[<a href="#bk-221-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-221-arm-2"></span>+++Then, try:
  .. If ``setValue'^{asterisk}^`` is equal to ``+SET+`` ``+`{+`` ``+'...'+`` ``+`}+``: return ``true``.
-. +++<span class="bk-arm-anchor" id="bk-223-arm-3"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-221-arm-3"></span>+++Then, try:
  .. Check that ``setValue'^{asterisk}^`` is a non-empty list.
  .. Let ``setValue~h~`` ``{two-colons}`` ``setValue~t~^{asterisk}^`` be ``setValue'^{asterisk}^``.
  .. Check that ``value^{asterisk}^`` is a non-empty list.
@@ -21924,11 +21904,11 @@ xref:Eval_keyset_simple[Evaluating ``simpleKeysetExpressionIR``, under context `
 
 Eval_keyset_simple dispatch:
 
-. +++<span class="bk-arm-anchor" id="bk-224-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-222-arm-1"></span>+++Try:
  .. If let ``typedExpressionIR`` of type ``typedExpressionIR`` be ``simpleKeysetExpressionIR``: goto xref:Eval_keyset_simple-typedExpressionIR[typedExpressionIR]
  .. Else if let ``typedExpressionIR~l~`` ``+'&&&'+`` ``typedExpressionIR~r~`` be ``simpleKeysetExpressionIR``: goto xref:Eval_keyset_simple-mask[mask]
  .. Else if let ``typedExpressionIR~l~`` ``+'..'+`` ``typedExpressionIR~r~`` be ``simpleKeysetExpressionIR``: goto xref:Eval_keyset_simple-range[range]
-. +++<span class="bk-arm-anchor" id="bk-224-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-222-arm-2"></span>+++Then, try:
  .. Goto xref:Eval_keyset_simple-default-any[default-any]
 
 xref:Eval_keysets_simple[Eval_keysets_simple: ``EC`` ``ARCH`` ``+|-+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+:+`` ``%`` ``%`` ``%``]
@@ -22010,15 +21990,15 @@ xref:ForInitStmt_eval[ForInitStmt_eval]:
 xref:ForInitStmt_eval[Runtime evaluation of ``forInitStatementIR``, under evaluation context ``EC~0~`` and state ``ARCH``]:
 
 . If ``forInitStatementIR`` matches pattern ``%`` ``%`` ``%`` ``%``:
- .. +++<span class="bk-arm-anchor" id="bk-225-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-223-arm-1"></span>+++Try:
   ... Let ``annotationList`` ``typeIR`` ``nameIR`` ``initializerIR^?^`` be ``forInitStatementIR``.
   ... If ``initializerIR^?^`` is none:
-   .... Let ``typeIR~subst~`` be xref:subst_type_e[``typeIR`` substituted by bound type variables in ``EC~0~`` from the ``+LOCAL+`` layer].+++<sub class="bk-mark">[<a href="#bk-225-arm-2">→ b</a>]</sub>+++
-   .... Let ``value~init~`` be xref:default[the default value for type ``typeIR~subst~``].+++<sub class="bk-mark">[<a href="#bk-225-arm-2">→ b</a>]</sub>+++
-   .... Let ``EC~1~`` be xref:add_var_e[``EC~0~`` where ``{nbsp}~BARE~`` ``nameIR`` to ``value~init~`` is added to the ``+LOCAL+`` layer].+++<sub class="bk-mark">[<a href="#bk-225-arm-2">→ b</a>]</sub>+++
+   .... Let ``typeIR~subst~`` be xref:subst_type_e[``typeIR`` substituted by bound type variables in ``EC~0~`` from the ``+LOCAL+`` layer].+++<sub class="bk-mark">[<a href="#bk-223-arm-2">→ b</a>]</sub>+++
+   .... Let ``value~init~`` be xref:default[the default value for type ``typeIR~subst~``].+++<sub class="bk-mark">[<a href="#bk-223-arm-2">→ b</a>]</sub>+++
+   .... Let ``EC~1~`` be xref:add_var_e[``EC~0~`` where ``{nbsp}~BARE~`` ``nameIR`` to ``value~init~`` is added to the ``+LOCAL+`` layer].+++<sub class="bk-mark">[<a href="#bk-223-arm-2">→ b</a>]</sub>+++
    .... The result is
 * the updated evaluation context ``EC~1~``, state ``ARCH``, and ``{nbsp}~EMPTY~``.
- .. +++<span class="bk-arm-anchor" id="bk-225-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-223-arm-2"></span>+++Then, try:
   ... Let ``annotationList`` ``typeIR`` ``nameIR`` ``initializerOptIR`` be ``forInitStatementIR``.
   ... Check that ``initializerOptIR`` is defined.
   ... Let ``+'='+`` ``typedExpressionIR~init~`` be ``initializerOptIR``.
@@ -22074,17 +22054,17 @@ xref:ForThreeClauseStmt_eval[ForThreeClauseStmt_eval]:
 xref:ForThreeClauseStmt_eval[Looping ``statementIR`` with condition ``typedExpressionIR`` and updates ``forUpdateStatementListIR``, under evaluation context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be the result of xref:Expr_eval[evaluating ``typedExpressionIR``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. +++<span class="bk-arm-anchor" id="bk-226-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-224-arm-1"></span>+++Try:
  .. If let ``abortResult`` of type ``abortResult`` be ``expressionResult``:
   ... The result is
 * the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``abortResult``.
-. +++<span class="bk-arm-anchor" id="bk-226-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-224-arm-2"></span>+++Then, try:
  .. If ``expressionResult`` is equal to ``{nbsp}~CONT~`` ``{nbsp}~B~`` ``false``:
   ... The result is
 * the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``{nbsp}~EMPTY~``.
  .. Else if ``expressionResult`` is equal to ``{nbsp}~CONT~`` ``{nbsp}~B~`` ``true``:
   ... Let context ``EC~2~``, state ``ARCH~2~``, and ``statementResult'`` be the result of xref:Stmt_eval[runtime evaluation of ``statementIR``, under context ``EC~1~`` and state ``ARCH~1~`` at ``+LOCAL+``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... +++<span class="bk-arm-anchor" id="bk-227-arm-1"></span>+++Try:
+  ... +++<span class="bk-arm-anchor" id="bk-225-arm-1"></span>+++Try:
    .... If let ``abortResult`` of type ``abortResult`` be ``statementResult'``:
     ..... The result is
 * the updated evaluation context ``EC~2~``, state ``ARCH~2~``, and ``abortResult``.
@@ -22094,7 +22074,7 @@ xref:ForThreeClauseStmt_eval[Looping ``statementIR`` with condition ``typedExpre
    .... Else if let ``forBreakResult`` of type ``forBreakResult`` be ``statementResult'``:
     ..... The result is
 * the updated evaluation context ``EC~2~``, state ``ARCH~2~``, and ``{nbsp}~EMPTY~``.
-  ... +++<span class="bk-arm-anchor" id="bk-227-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-225-arm-2"></span>+++Then, try:
    .... Check that ``statementResult'`` is equal to ``{nbsp}~EMPTY~`` or ``statementResult'`` is equal to ``+CONTINUE+``.
    .... Let the updated evaluation context ``EC~3~``, state ``ARCH~3~``, and ``statementResult''`` be the result of xref:ForUpdateStmts_eval[runtime evaluation of ``forUpdateStatementListIR``, under evaluation context ``EC~2~`` and state ``ARCH~2~``].+++<sub class="bk-mark">[FAIL]</sub>+++
    .... If let ``exitResult`` of type ``exitResult`` be ``statementResult''``:
@@ -22165,15 +22145,15 @@ xref:values_of_setValue[The values in ``setValue`` of type ``+SET+`` ``+`<+`` ``
 
 . Check that ``setValue`` matches pattern ``+SET+`` ``+`{+`` ``%`` ``+'..'+`` ``%`` ``+`}+``.
 . Let ``+SET+`` ``+`{+`` ``value~l~`` ``+'..'+`` ``value~r~`` ``+`}+`` be ``setValue``.
-. +++<span class="bk-arm-anchor" id="bk-228-arm-1"></span>+++Try:
- .. If xref:bin_lt[``value~l~`` ``+'<'+`` ``value~r~``]:+++<sub class="bk-mark">[<a href="#bk-228-arm-2">→ 4</a>]</sub>+++
-  ... Let ``value~one~`` be xref:cast_op[``+D+`` ``1`` casted to type ``typeIR``].+++<sub class="bk-mark">[<a href="#bk-228-arm-2">→ 4</a>]</sub>+++
-  ... Let ``value~l_inc~`` be xref:bin_plus[``value~l~`` ``{apos}{plus}{apos}`` ``value~one~``].+++<sub class="bk-mark">[<a href="#bk-228-arm-2">→ 4</a>]</sub>+++
-  ... Let ``value^{asterisk}^`` be xref:values_of_setValue[the values in ``+SET+`` ``+`{+`` ``value~l_inc~`` ``+'..'+`` ``value~r~`` ``+`}+`` of type ``+SET+`` ``+`<+`` ``typeIR`` ``+`>+``].+++<sub class="bk-mark">[<a href="#bk-228-arm-2">→ 4</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-226-arm-1"></span>+++Try:
+ .. If xref:bin_lt[``value~l~`` ``+'<'+`` ``value~r~``]:+++<sub class="bk-mark">[<a href="#bk-226-arm-2">→ 4</a>]</sub>+++
+  ... Let ``value~one~`` be xref:cast_op[``+D+`` ``1`` casted to type ``typeIR``].+++<sub class="bk-mark">[<a href="#bk-226-arm-2">→ 4</a>]</sub>+++
+  ... Let ``value~l_inc~`` be xref:bin_plus[``value~l~`` ``{apos}{plus}{apos}`` ``value~one~``].+++<sub class="bk-mark">[<a href="#bk-226-arm-2">→ 4</a>]</sub>+++
+  ... Let ``value^{asterisk}^`` be xref:values_of_setValue[the values in ``+SET+`` ``+`{+`` ``value~l_inc~`` ``+'..'+`` ``value~r~`` ``+`}+`` of type ``+SET+`` ``+`<+`` ``typeIR`` ``+`>+``].+++<sub class="bk-mark">[<a href="#bk-226-arm-2">→ 4</a>]</sub>+++
   ... Return ``value~l~`` ``{two-colons}`` ``value^{asterisk}^``.
-. +++<span class="bk-arm-anchor" id="bk-228-arm-2"></span>+++Then, try:
- .. If xref:bin_eq[``value~l~`` ``+'=='+`` ``value~r~``]:+++<sub class="bk-mark">[<a href="#bk-228-arm-3">→ 5</a>]</sub>+++ return ``value~l~``.
-. +++<span class="bk-arm-anchor" id="bk-228-arm-3"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-226-arm-2"></span>+++Then, try:
+ .. If xref:bin_eq[``value~l~`` ``+'=='+`` ``value~r~``]:+++<sub class="bk-mark">[<a href="#bk-226-arm-3">→ 5</a>]</sub>+++ return ``value~l~``.
+. +++<span class="bk-arm-anchor" id="bk-226-arm-3"></span>+++Then, try:
  .. Check that xref:bin_gt[``value~l~`` ``+'>'+`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``·``.
 
@@ -22192,7 +22172,7 @@ xref:ForInStmt_eval[Looping over ``value^{asterisk}^`` with loop variable ``name
  .. Let ``value~h~`` ``{two-colons}`` ``value~t~^{asterisk}^`` be ``value^{asterisk}^``.
  .. Let ``EC~1~`` be xref:update_var_e[``EC`` where ``{nbsp}~BARE~`` ``nameIR`` is updated to ``value~h~`` from the ``+LOCAL+`` layer].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let context ``EC~2~``, state ``ARCH~1~``, and ``statementResult'`` be the result of xref:Stmt_eval[runtime evaluation of ``statementIR``, under context ``EC~1~`` and state ``ARCH`` at ``+LOCAL+``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. +++<span class="bk-arm-anchor" id="bk-229-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-227-arm-1"></span>+++Try:
   ... If let ``abortResult`` of type ``abortResult`` be ``statementResult'``:
    .... The result is
 * the updated evaluation context ``EC~2~``, state ``ARCH~1~``, and ``abortResult``.
@@ -22202,7 +22182,7 @@ xref:ForInStmt_eval[Looping over ``value^{asterisk}^`` with loop variable ``name
   ... Else if let ``forBreakResult`` of type ``forBreakResult`` be ``statementResult'``:
    .... The result is
 * the updated evaluation context ``EC~2~``, state ``ARCH~1~``, and ``{nbsp}~EMPTY~``.
- .. +++<span class="bk-arm-anchor" id="bk-229-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-227-arm-2"></span>+++Then, try:
   ... Check that ``statementResult'`` is equal to ``{nbsp}~EMPTY~`` or ``statementResult'`` is equal to ``+CONTINUE+``.
   ... Let the updated evaluation context ``EC~3~``, state ``ARCH~2~``, and ``statementResult`` be the result of xref:ForInStmt_eval[looping over ``value~t~^{asterisk}^`` with loop variable ``nameIR`` and body ``statementIR``, under evaluation context ``EC~2~`` and state ``ARCH~1~``].+++<sub class="bk-mark">[FAIL]</sub>+++
   ... The result is
@@ -22257,20 +22237,20 @@ xref:SwitchCases_table_eval[Runtime evaluation of ``switchCaseIR^{asterisk}^`` f
  .. Else:
   ... Let ``switchLabelIR~h~`` ``+':'+`` be ``switchCaseIR~h~``.
   ... If xref:match_switchLabelIR_table[``id`` matches ``switchLabelIR~h~``]:+++<sub class="bk-mark">[FAIL]</sub>+++
-   .... +++<span class="bk-arm-anchor" id="bk-230-arm-1"></span>+++Try:
-    ..... For each ``switchCaseIR~t~`` in ``switchCaseIR~t~^{asterisk}^``:+++<sub class="bk-mark">[<a href="#bk-230-arm-2">→ B</a>]</sub>+++
+   .... +++<span class="bk-arm-anchor" id="bk-228-arm-1"></span>+++Try:
+    ..... For each ``switchCaseIR~t~`` in ``switchCaseIR~t~^{asterisk}^``:+++<sub class="bk-mark">[<a href="#bk-228-arm-2">→ B</a>]</sub>+++
 +
 --
      ****** Let ``bool`` be xref:is_non_fallthrough_switchCaseIR[``switchCaseIR~t~`` is not a fall-through case].
 --
 +
 Let ``bool^{asterisk}^`` be the resulting list.
-    ..... Let ``switchCaseIR'^{asterisk}^`` be xref:filter_[``switchCaseIR~t~^{asterisk}^`` filtered by ``bool^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-230-arm-2">→ B</a>]</sub>+++
+    ..... Let ``switchCaseIR'^{asterisk}^`` be xref:filter_[``switchCaseIR~t~^{asterisk}^`` filtered by ``bool^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-228-arm-2">→ B</a>]</sub>+++
     ..... If ``switchCaseIR'^{asterisk}^`` is a non-empty list:
      ...... Let ``switchCaseIR''`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``switchCaseIR'^{asterisk}^``.
      ...... If let ``++_++`` ``+':'+`` ``blockStatementIR`` be ``switchCaseIR''``:
       ....... The result is the matched block ``blockStatementIR``.
-   .... +++<span class="bk-arm-anchor" id="bk-230-arm-2"></span>+++Then, try:
+   .... +++<span class="bk-arm-anchor" id="bk-228-arm-2"></span>+++Then, try:
     ..... Check that xref:filter_[``switchCaseIR~t~^{asterisk}^`` filtered by ``$is_non_fallthrough_switchCaseIR(switchCaseIR~t~)^{asterisk}^``] is an empty list.+++<sub class="bk-mark">[FAIL]</sub>+++
     ..... The result is the matched block ``·``.
   ... Else:
@@ -22324,9 +22304,9 @@ SwitchLabel_general_eval dispatch:
 
 xref:match_switchLabelIR_general[``value`` matches ``value'``]
 
-. +++<span class="bk-arm-anchor" id="bk-231-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-229-arm-1"></span>+++Try:
  .. If let ``defaultValue`` of type ``defaultValue`` be ``value'``: return ``true``.
-. +++<span class="bk-arm-anchor" id="bk-231-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-229-arm-2"></span>+++Then, try:
  .. Check that ``value'`` is not equal to ``+DEFAULT+``.
  .. Return xref:bin_eq[``value`` ``+'=='+`` ``value'``].+++<sub class="bk-mark">[FAIL]</sub>+++
 
@@ -22360,21 +22340,21 @@ xref:SwitchCases_general_eval[Runtime evaluation of ``switchCaseIR^{asterisk}^``
   ... Check that ``expressionResult`` has type ``continueResult<value>``.
   ... Let ``{nbsp}~CONT~`` ``value~label~`` be ``expressionResult``.
   ... If xref:match_switchLabelIR_general[``value`` matches ``value~label~``]:+++<sub class="bk-mark">[FAIL]</sub>+++
-   .... +++<span class="bk-arm-anchor" id="bk-232-arm-1"></span>+++Try:
-    ..... For each ``switchCaseIR~t~`` in ``switchCaseIR~t~^{asterisk}^``:+++<sub class="bk-mark">[<a href="#bk-232-arm-2">→ B</a>]</sub>+++
+   .... +++<span class="bk-arm-anchor" id="bk-230-arm-1"></span>+++Try:
+    ..... For each ``switchCaseIR~t~`` in ``switchCaseIR~t~^{asterisk}^``:+++<sub class="bk-mark">[<a href="#bk-230-arm-2">→ B</a>]</sub>+++
 +
 --
      ****** Let ``bool`` be xref:is_non_fallthrough_switchCaseIR[``switchCaseIR~t~`` is not a fall-through case].
 --
 +
 Let ``bool^{asterisk}^`` be the resulting list.
-    ..... Let ``switchCaseIR'^{asterisk}^`` be xref:filter_[``switchCaseIR~t~^{asterisk}^`` filtered by ``bool^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-232-arm-2">→ B</a>]</sub>+++
+    ..... Let ``switchCaseIR'^{asterisk}^`` be xref:filter_[``switchCaseIR~t~^{asterisk}^`` filtered by ``bool^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-230-arm-2">→ B</a>]</sub>+++
     ..... If ``switchCaseIR'^{asterisk}^`` is a non-empty list:
      ...... Let ``switchCaseIR''`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``switchCaseIR'^{asterisk}^``.
      ...... If let ``++_++`` ``+':'+`` ``blockStatementIR`` be ``switchCaseIR''``:
       ....... The result is
 * the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``blockStatementIR``.
-   .... +++<span class="bk-arm-anchor" id="bk-232-arm-2"></span>+++Then, try:
+   .... +++<span class="bk-arm-anchor" id="bk-230-arm-2"></span>+++Then, try:
     ..... Check that xref:filter_[``switchCaseIR~t~^{asterisk}^`` filtered by ``$is_non_fallthrough_switchCaseIR(switchCaseIR~t~)^{asterisk}^``] is an empty list.+++<sub class="bk-mark">[FAIL]</sub>+++
     ..... The result is
 * the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``·``.
@@ -22419,7 +22399,7 @@ xref:SelectCases_match[Matching ``value~key~^{asterisk}^`` against ``selectCaseI
 . Else:
  .. Let ``selectCaseIR~h~`` ``{two-colons}`` ``selectCaseIR~t~^{asterisk}^`` be ``selectCaseIR^{asterisk}^``.
  .. Let the updated context ``EC~1~``, state ``ARCH~1~``, and ``selectCaseMatchResult'`` be the result of xref:SelectCase_match[matching ``value~key~^{asterisk}^`` against ``selectCaseIR~h~`` under context ``EC`` and state ``ARCH``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. +++<span class="bk-arm-anchor" id="bk-233-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-231-arm-1"></span>+++Try:
   ... If let ``rejectTransitionResult`` of type ``rejectTransitionResult`` be ``selectCaseMatchResult'``:
    .... The result is the updated context ``EC~1~``, state ``ARCH~1~``, and ``rejectTransitionResult``.
   ... Else:
@@ -22427,7 +22407,7 @@ xref:SelectCases_match[Matching ``value~key~^{asterisk}^`` against ``selectCaseI
    .... If ``nameIR^?^`` is defined:
     ..... Let ``nameIR~state~`` be ``nameIR^?^``.
     ..... The result is the updated context ``EC~1~``, state ``ARCH~1~``, and ``{nbsp}~CONT~`` ``nameIR~state~``.
- .. +++<span class="bk-arm-anchor" id="bk-233-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-231-arm-2"></span>+++Then, try:
   ... Check that ``selectCaseMatchResult'`` is equal to ``{nbsp}~CONT~`` ``·``.
   ... Let the updated context ``EC~2~``, state ``ARCH~2~``, and ``selectCaseMatchResult`` be the result of xref:SelectCases_match[matching ``value~key~^{asterisk}^`` against ``selectCaseIR~t~^{asterisk}^`` under context ``EC~1~`` and state ``ARCH~1~``].+++<sub class="bk-mark">[FAIL]</sub>+++
   ... The result is the updated context ``EC~2~``, state ``ARCH~2~``, and ``selectCaseMatchResult``.
@@ -22549,20 +22529,20 @@ TableMatches_eval dispatch:
 xref:largest_priority_wins[``TBL`` has largest_priority_wins property]
 
 . Let ``tableCustomPropertyIR^{asterisk}^`` be ``TBL.+CUSTOMS+``.
-. +++<span class="bk-arm-anchor" id="bk-234-arm-1"></span>+++Try:
- .. For each ``tableCustomPropertyIR`` in ``tableCustomPropertyIR^{asterisk}^``:+++<sub class="bk-mark">[<a href="#bk-234-arm-2">→ 3</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-232-arm-1"></span>+++Try:
+ .. For each ``tableCustomPropertyIR`` in ``tableCustomPropertyIR^{asterisk}^``:+++<sub class="bk-mark">[<a href="#bk-232-arm-2">→ 3</a>]</sub>+++
 +
 --
   *** Let ``bool`` be xref:is_largest_priority_wins[``$is_largest_priority_wins(tableCustomPropertyIR)``].
 --
 +
 Let ``bool^{asterisk}^`` be the resulting list.
- .. Let ``tableCustomPropertyIR''^{asterisk}^`` be xref:filter_[``tableCustomPropertyIR^{asterisk}^`` filtered by ``bool^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-234-arm-2">→ 3</a>]</sub>+++
+ .. Let ``tableCustomPropertyIR''^{asterisk}^`` be xref:filter_[``tableCustomPropertyIR^{asterisk}^`` filtered by ``bool^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-232-arm-2">→ 3</a>]</sub>+++
  .. If ``tableCustomPropertyIR''^{asterisk}^`` is a list of length 1:
   ... Let ``tableCustomPropertyIR'`` be ``tableCustomPropertyIR''^{asterisk}^``.
   ... If let ``++_++`` ``++_++`` ``+CUSTOM_CONST+`` ``++_++`` ``+'='+`` ``{nbsp}~VALUE~`` ``value`` ``+';'+`` be ``tableCustomPropertyIR'``:
    .... If let ``{nbsp}~B~`` ``b`` of type ``boolValue`` be ``value``: return ``b``.
-. +++<span class="bk-arm-anchor" id="bk-234-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-232-arm-2"></span>+++Then, try:
  .. Check that xref:filter_[``tableCustomPropertyIR^{asterisk}^`` filtered by ``$is_largest_priority_wins(tableCustomPropertyIR)^{asterisk}^``] is an empty list.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``true``.
 
@@ -22575,7 +22555,7 @@ xref:is_largest_priority_wins[$is_largest_priority_wins(tableCustomPropertyIR)]
 
 xref:select_action[Tie-breaking among matches ``tableMatch'^{asterisk}^`` for table object ``TBL``]
 
-. +++<span class="bk-arm-anchor" id="bk-235-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-233-arm-1"></span>+++Try:
  .. If ``tableMatch'^{asterisk}^`` matches pattern ``[]``:
   ... Let ``++_++`` ``++_++`` ``+DEFAULT_ACTION+`` ``+'='+`` ``tableActionReferenceIR`` ``+';'+`` be ``TBL.+DEFAULT_ACTION+``.
   ... Return ``tableActionReferenceIR``.
@@ -22583,7 +22563,7 @@ xref:select_action[Tie-breaking among matches ``tableMatch'^{asterisk}^`` for ta
   ... Let ``tableMatch`` be ``tableMatch'^{asterisk}^``.
   ... Let ``++_++^?^`` ``+':'+`` ``tableActionReferenceIR`` be ``tableMatch``.
   ... Return ``tableActionReferenceIR``.
-. +++<span class="bk-arm-anchor" id="bk-235-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-233-arm-2"></span>+++Then, try:
  .. Check that the length of ``tableMatch'^{asterisk}^`` is greater than ``1``.
  .. For each ``tableMatch'`` in ``tableMatch'^{asterisk}^``:
 +
@@ -22641,12 +22621,12 @@ xref:ActionBody_eval[ActionBody_eval]:
 xref:ActionBody_eval[Evaluating action body ``blockStatementIR``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be the result of xref:Block_eval[runtime evaluation of ``blockStatementIR``, under context ``EC~0~``, and state ``ARCH~0~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. +++<span class="bk-arm-anchor" id="bk-236-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-234-arm-1"></span>+++Try:
  .. If let ``continueEmptyResult`` of type ``continueEmptyResult`` be ``statementResult``:
   ... The result is context ``EC~1~``, state ``ARCH~1~`` and result ``+RETURN+`` ``·``.
  .. Else if let ``exitResult`` of type ``exitResult`` be ``statementResult``:
   ... The result is context ``EC~1~``, state ``ARCH~1~`` and result ``+EXIT+``.
-. +++<span class="bk-arm-anchor" id="bk-236-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-234-arm-2"></span>+++Then, try:
  .. Check that ``statementResult`` is equal to ``+RETURN+`` ``·``.
  .. The result is context ``EC~1~``, state ``ARCH~1~`` and result ``+RETURN+`` ``·``.
 
@@ -22725,34 +22705,34 @@ Program_init dispatch:
 
 xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~to~`` in ``EC``]
 
-. +++<span class="bk-arm-anchor" id="bk-237-arm-1"></span>+++Try:
- .. Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``].+++<sub class="bk-mark">[<a href="#bk-237-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-235-arm-1"></span>+++Try:
+ .. Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``].+++<sub class="bk-mark">[<a href="#bk-235-arm-2">→ 2</a>]</sub>+++
  .. If ``typedExpressionIR'^?^`` is defined:
   ... Let ``typedExpressionIR~cast~`` be ``typedExpressionIR'^?^``.
   ... Return ``typedExpressionIR~cast~``.
-. +++<span class="bk-arm-anchor" id="bk-237-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-235-arm-2"></span>+++Then, try:
  .. If xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``] is none:+++<sub class="bk-mark">[<a href="#func:cast_control_plane-else">→ ⋅</a>]</sub>+++
-  ... +++<span class="bk-arm-anchor" id="bk-238-arm-1"></span>+++Try:
+  ... +++<span class="bk-arm-anchor" id="bk-236-arm-1"></span>+++Try:
    .... If ``+BOOL+`` is equal to ``typeIR~to~``:
-    ..... If ``+INT+`` is equal to xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``]:+++<sub class="bk-mark">[<a href="#bk-238-arm-2">→ ii</a>]</sub>+++
-     ...... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-238-arm-2">→ ii</a>]</sub>+++
+    ..... If ``+INT+`` is equal to xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``]:+++<sub class="bk-mark">[<a href="#bk-236-arm-2">→ ii</a>]</sub>+++
+     ...... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-236-arm-2">→ ii</a>]</sub>+++
      ...... Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
      ...... Return ``typedExpressionIR~cast~``.
-  ... +++<span class="bk-arm-anchor" id="bk-238-arm-2"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-236-arm-2"></span>+++Then, try:
    .... If ``+ERROR+`` is equal to ``typeIR~to~``:
     ..... Let ``expressionIR`` and xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk``] be the expression and the note of ``typedExpressionIR``.
     ..... If let ``integerLiteral`` of type ``integerLiteral`` be ``expressionIR``:
      ...... If let ``+D+`` ``i`` be ``integerLiteral``:
       ....... If let ``n`` of type ``nat`` be ``i``:
        ........ If let ``intTypeIR`` of type ``intTypeIR`` be ``typeIR``:
-        ......... Let ``+`{+`` ``value~frame~^{asterisk}^`` ``+`}+`` be xref:codom_map[the codomain of the map ``EC.+GLOBAL+.+FRAME+``].+++<sub class="bk-mark">[<a href="#bk-238-arm-3">→ iii</a>]</sub>+++
-        ......... Let ``value~error~^{asterisk}^`` be xref:filter_[``value~frame~^{asterisk}^`` filtered by ``(`` ``value~frame~`` ``has`` ``type`` ``errorValue`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-238-arm-3">→ iii</a>]</sub>+++
+        ......... Let ``+`{+`` ``value~frame~^{asterisk}^`` ``+`}+`` be xref:codom_map[the codomain of the map ``EC.+GLOBAL+.+FRAME+``].+++<sub class="bk-mark">[<a href="#bk-236-arm-3">→ iii</a>]</sub>+++
+        ......... Let ``value~error~^{asterisk}^`` be xref:filter_[``value~frame~^{asterisk}^`` filtered by ``(`` ``value~frame~`` ``has`` ``type`` ``errorValue`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-236-arm-3">→ iii</a>]</sub>+++
         ......... If ``n`` is less than the length of ``value~error~^{asterisk}^``:
          .......... Let ``value`` be ``value~error~^{asterisk}^[n]``.
          .......... If let ``+ERROR+`` ``+'.'+`` ``nameIR~error~`` of type ``errorValue`` be ``value``:
           ........... Let ``typedExpressionIR~error~`` be xref:typedExpressionIR[``+ERROR+`` ``+'.'+`` ``nameIR~error~`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
           ........... Return ``typedExpressionIR~error~``.
-  ... +++<span class="bk-arm-anchor" id="bk-238-arm-3"></span>+++Then, try:
+  ... +++<span class="bk-arm-anchor" id="bk-236-arm-3"></span>+++Then, try:
    .... If let ``+TYPEDEF+`` ``++_++`` ``typeIR~base~`` of type ``typedefTypeIR`` be ``typeIR~to~``:
     ..... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~base~`` in ``EC``].+++<sub class="bk-mark">[<a href="#func:cast_control_plane-else">→ ⋅</a>]</sub>+++
     ..... If ``typedExpressionIR'^?^`` is defined:
@@ -22791,9 +22771,9 @@ xref:reverse_bytes_of_hex[$reverse_bytes_of_hex(t)]
 
 xref:reverse_bytes_of_hex'[$reverse_bytes_of_hex'(t)]
 
-. +++<span class="bk-arm-anchor" id="bk-239-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-237-arm-1"></span>+++Try:
  .. If the length of ``t`` is less than or equal to ``2``: return ``t``.
-. +++<span class="bk-arm-anchor" id="bk-239-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-237-arm-2"></span>+++Then, try:
  .. Let ``n~len~`` be the length of ``t``.
  .. Check that ``n~len~`` is greater than ``2``.
  .. Check that ``0`` ``{plus}`` ``2`` is less than or equal to the length of ``t``.
@@ -22815,10 +22795,10 @@ xref:text_of_number_tableKeyValueInterface[$text_of_number_tableKeyValueInterfac
 
 xref:tableObject_create_entry_priority[$tableObject_create_entry_priority(tableEntryPriorityInterface)]
 
-. +++<span class="bk-arm-anchor" id="bk-240-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-238-arm-1"></span>+++Try:
  .. Let ``i^?^`` be ``tableEntryPriorityInterface``.
  .. If ``i^?^`` is none: return ``·``.
-. +++<span class="bk-arm-anchor" id="bk-240-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-238-arm-2"></span>+++Then, try:
  .. Check that ``tableEntryPriorityInterface`` is defined.
  .. Let ``i`` be ``tableEntryPriorityInterface``.
  .. Check that ``i`` has type ``nat``.
@@ -23008,16 +22988,16 @@ TableObject_create_entry_key dispatch:
 
 . If ``t`` is equal to ``"exact"``: goto xref:TableObject_create_entry_key-exact[exact]
 . Else if ``t`` is equal to ``"ternary"``:
- .. +++<span class="bk-arm-anchor" id="bk-241-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-239-arm-1"></span>+++Try:
   ... Goto xref:TableObject_create_entry_key-ternary-hex[ternary-hex]
- .. +++<span class="bk-arm-anchor" id="bk-241-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-239-arm-2"></span>+++Then, try:
   ... Goto xref:TableObject_create_entry_key-ternary-bin[ternary-bin]
 . Else if ``t`` is equal to ``"lpm"``:
- .. +++<span class="bk-arm-anchor" id="bk-242-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-240-arm-1"></span>+++Try:
   ... Goto xref:TableObject_create_entry_key-lpm-hex[lpm-hex]
- .. +++<span class="bk-arm-anchor" id="bk-242-arm-2"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-240-arm-2"></span>+++Then, try:
   ... Goto xref:TableObject_create_entry_key-lpm-bin[lpm-bin]
- .. +++<span class="bk-arm-anchor" id="bk-242-arm-3"></span>+++Then, try:
+ .. +++<span class="bk-arm-anchor" id="bk-240-arm-3"></span>+++Then, try:
   ... Goto xref:TableObject_create_entry_key-lpm-prefix[lpm-prefix]
 . Else if ``t`` is equal to ``"optional"``: goto xref:TableObject_create_entry_key-optional[optional]
 . Else if ``t`` is equal to ``"selector"``: goto xref:TableObject_create_entry_key-selector[selector]
@@ -23035,9 +23015,9 @@ xref:TableObject_create_entry_keys[``EC`` ``+|-+`` ``(`` ``nameIR~key_h~,`` ``na
 
 TableObject_create_entry_keys dispatch:
 
-. +++<span class="bk-arm-anchor" id="bk-243-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-241-arm-1"></span>+++Try:
  .. If ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^`` is an empty list: goto xref:TableObject_create_entry_keys-nil[nil]
-. +++<span class="bk-arm-anchor" id="bk-243-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-241-arm-2"></span>+++Then, try:
  .. Let ``tableKeyInterface^{asterisk}^`` be ``tableKeysetInterface``.
  .. Check that ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^`` is a non-empty list.
  .. Let ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``)`` ``{two-colons}`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^`` be ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^``.
@@ -23180,12 +23160,12 @@ Let ``i~aligned~^{asterisk}^`` be the resulting list.
 
 xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+`{+ ( id~arg~ +':'+ i~arg~ )^{asterisk}^ +`}+, ++_++ ++_++ ++_++ nameIR~param~ ++_++)]
 
-. +++<span class="bk-arm-anchor" id="bk-244-arm-1"></span>+++Try:
- .. Let ``i'^?^`` be xref:find_map[the value of ``nameIR~param~`` in map ``+`{+`` ``(`` ``id~arg~`` ``+':'+`` ``i~arg~`` ``)^{asterisk}^`` ``+`}+``].+++<sub class="bk-mark">[<a href="#bk-244-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-242-arm-1"></span>+++Try:
+ .. Let ``i'^?^`` be xref:find_map[the value of ``nameIR~param~`` in map ``+`{+`` ``(`` ``id~arg~`` ``+':'+`` ``i~arg~`` ``)^{asterisk}^`` ``+`}+``].+++<sub class="bk-mark">[<a href="#bk-242-arm-2">→ 2</a>]</sub>+++
  .. If ``i'^?^`` is defined:
   ... Let ``i`` be ``i'^?^``.
   ... Return ``i``.
-. +++<span class="bk-arm-anchor" id="bk-244-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-242-arm-2"></span>+++Then, try:
  .. Check that xref:find_map[the value of ``nameIR~param~`` in map ``+`{+`` ``(`` ``id~arg~`` ``+':'+`` ``i~arg~`` ``)^{asterisk}^`` ``+`}+``] is none.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``0``.
 
@@ -23196,10 +23176,10 @@ xref:find_tableActionIR_qualified[$find_tableActionIR_qualified(tableActionIR^{a
  .. Let ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^`` be ``tableActionIR^{asterisk}^``.
  .. Let ``annotationList`` ``tableActionReferenceIR`` ``+'#'+`` ``+`(+`` ``++_++`` ``+','+`` ``parameterIR~control~^{asterisk}^`` ``+`)+`` ``+';'+`` be ``tableActionIR~h~``.
  .. Let ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR~data~^{asterisk}^`` ``+`)+`` be ``tableActionReferenceIR``.
- .. +++<span class="bk-arm-anchor" id="bk-245-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-243-arm-1"></span>+++Try:
   ... If ``nameIR`` is not equal to ``controlPlaneNameIR``:
-   .... Return xref:find_tableActionIR_qualified[``$find_tableActionIR_qualified(tableActionIR~t~^{asterisk}^,`` ``nameIR)``].+++<sub class="bk-mark">[<a href="#bk-245-arm-2">→ e</a>]</sub>+++
- .. +++<span class="bk-arm-anchor" id="bk-245-arm-2"></span>+++Then, try:
+   .... Return xref:find_tableActionIR_qualified[``$find_tableActionIR_qualified(tableActionIR~t~^{asterisk}^,`` ``nameIR)``].+++<sub class="bk-mark">[<a href="#bk-243-arm-2">→ e</a>]</sub>+++
+ .. +++<span class="bk-arm-anchor" id="bk-243-arm-2"></span>+++Then, try:
   ... Check that ``nameIR`` is equal to ``controlPlaneNameIR``.
   ... Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].+++<sub class="bk-mark">[FAIL]</sub>+++
   ... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
@@ -23225,10 +23205,10 @@ xref:find_tableActionIR_unqualified'[$find_tableActionIR_unqualified'(tableActio
  .. Let ``nameIR'^{asterisk}^`` be xref:rev_[the reversal of ``nameIR~split~^{asterisk}^``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Check that ``nameIR'^{asterisk}^`` is a non-empty list.
  .. Let ``nameIR~unqualified~`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``nameIR'^{asterisk}^``.
- .. +++<span class="bk-arm-anchor" id="bk-246-arm-1"></span>+++Try:
+ .. +++<span class="bk-arm-anchor" id="bk-244-arm-1"></span>+++Try:
   ... If ``nameIR`` is not equal to ``nameIR~unqualified~``:
-   .... Return xref:find_tableActionIR_unqualified'[``$find_tableActionIR_unqualified'(tableActionIR~t~^{asterisk}^,`` ``nameIR)``].+++<sub class="bk-mark">[<a href="#bk-246-arm-2">→ k</a>]</sub>+++
- .. +++<span class="bk-arm-anchor" id="bk-246-arm-2"></span>+++Then, try:
+   .... Return xref:find_tableActionIR_unqualified'[``$find_tableActionIR_unqualified'(tableActionIR~t~^{asterisk}^,`` ``nameIR)``].+++<sub class="bk-mark">[<a href="#bk-244-arm-2">→ k</a>]</sub>+++
+ .. +++<span class="bk-arm-anchor" id="bk-244-arm-2"></span>+++Then, try:
   ... Check that ``nameIR`` is equal to ``nameIR~unqualified~``.
   ... Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].+++<sub class="bk-mark">[FAIL]</sub>+++
   ... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
@@ -23318,9 +23298,9 @@ Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the resulting list.
 
 TableObject_create_entry_action dispatch:
 
-. +++<span class="bk-arm-anchor" id="bk-247-arm-1"></span>+++Try:
+. +++<span class="bk-arm-anchor" id="bk-245-arm-1"></span>+++Try:
  .. Goto xref:TableObject_create_entry_action-qualified[qualified]
-. +++<span class="bk-arm-anchor" id="bk-247-arm-2"></span>+++Then, try:
+. +++<span class="bk-arm-anchor" id="bk-245-arm-2"></span>+++Then, try:
  .. Goto xref:TableObject_create_entry_action-unqualified[unqualified]
 
 xref:TableObject_add_entry[TableObject_add_entry: ``EC`` ``+|-+`` ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL`` ``+`}+`` ``+'@'+`` ``tableEntryPriorityInterface`` ``+','+`` ``tableKeysetInterface`` ``+','+`` ``tableActionInterface`` ``+:+`` ``%``]
