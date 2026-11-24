@@ -150,13 +150,15 @@ dec $lift_baseTypeIR(baseTypeIR) : baseType?
 
 def $lift_baseTypeIR(BOOL) = BOOL
 def $lift_baseTypeIR(ERROR) = ERROR
-def $lift_baseTypeIR(ERROR) = ERROR
 def $lift_baseTypeIR(MATCH_KIND) = MATCH_KIND
 def $lift_baseTypeIR(STRING) = STRING
 def $lift_baseTypeIR(INT) = INT
 def $lift_baseTypeIR(INT `< w `>) = INT `< w `>
 def $lift_baseTypeIR(BIT `< w `>) = BIT `< w `>
 def $lift_baseTypeIR(VARBIT `< w `>) = VARBIT `< w `>
+def $lift_baseTypeIR(baseTypeIR) = eps
+  -- debug baseTypeIR
+  -- otherwise
 
 ;;
 ;;;; Named types
@@ -1192,6 +1194,7 @@ def $lift_callStatementIR(
 def $lift_callStatementIR(
     callableTargetIR `< typeArgumentIR* `> `( argumentIR* `) ';')
   = lvalue `< typeArgumentList `> `( argumentList `) ';'
+  -- if typeArgumentIR* =/= eps
   -- if lvalue = $lift_callableTargetIR_as_lvalue(callableTargetIR)
   -- if typeArgumentList = $lift_typeArgumentListIR(typeArgumentIR*)
   -- if argumentList = $lift_argumentListIR(argumentIR*)

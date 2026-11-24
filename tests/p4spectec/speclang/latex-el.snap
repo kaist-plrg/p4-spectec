@@ -10175,7 +10175,8 @@ source: test-driver/tests/speclang.rs
 \quad\quad{{\mathsf{nameIR}}_{\mathsf{optional}}}^{\ast}
 \end{array}\right) \\
 {\scriptstyle\mathtt{(2)}} & \mathsf{\_}\,\mathsf{\_}\,\mathsf{\_}\,{\mathsf{nameIR}}_{\mathsf{h}}\,\mathsf{\_} = {\mathsf{parameterIR}}_{\mathsf{h}} \\
-{\scriptstyle\mathtt{(3)}} & {\mathsf{nameIR}}_{\mathsf{h}} \in {{\mathsf{nameIR}}_{\mathsf{optional}}}^{\ast}
+{\scriptstyle\mathtt{(3)}} & \neg \left({\mathsf{nameIR}}_{\mathsf{h}} \in {{\mathsf{nameIR}}_{\mathsf{default}}}^{\ast}\right) \\
+{\scriptstyle\mathtt{(4)}} & {\mathsf{nameIR}}_{\mathsf{h}} \in {{\mathsf{nameIR}}_{\mathsf{optional}}}^{\ast}
 \end{array}}\smash{\hphantom{\begin{array}{r}
 \mathrm{partition\_parameterListIR}\left(\begin{array}{l}
 {\mathsf{parameterIR}}_{\mathsf{h}} \mathbin{::} {{\mathsf{parameterIR}}_{\mathsf{t}}}^{\ast}, \\
@@ -10199,7 +10200,8 @@ source: test-driver/tests/speclang.rs
 \quad\quad{{\mathsf{nameIR}}_{\mathsf{optional}}}^{\ast}
 \end{array}\right) \\
 {\scriptstyle\mathtt{(2)}} & \mathsf{\_}\,\mathsf{\_}\,\mathsf{\_}\,{\mathsf{nameIR}}_{\mathsf{h}}\,\mathsf{\_} = {\mathsf{parameterIR}}_{\mathsf{h}} \\
-{\scriptstyle\mathtt{(3)}} & {\mathsf{nameIR}}_{\mathsf{h}} \in {{\mathsf{nameIR}}_{\mathsf{optional}}}^{\ast}
+{\scriptstyle\mathtt{(3)}} & \neg \left({\mathsf{nameIR}}_{\mathsf{h}} \in {{\mathsf{nameIR}}_{\mathsf{default}}}^{\ast}\right) \\
+{\scriptstyle\mathtt{(4)}} & {\mathsf{nameIR}}_{\mathsf{h}} \in {{\mathsf{nameIR}}_{\mathsf{optional}}}^{\ast}
 \end{array}
 \end{array}}}
 
@@ -11743,10 +11745,6 @@ source: test-driver/tests/speclang.rs
 \end{aligned}
 
 \begin{aligned}
-\mathrm{lift\_baseTypeIR}\left(\mathsf{ERROR}\right) & = & \mathsf{ERROR}
-\end{aligned}
-
-\begin{aligned}
 \mathrm{lift\_baseTypeIR}\left(\mathsf{MATCH\_KIND}\right) & = & \mathsf{MATCH\_KIND}
 \end{aligned}
 
@@ -11768,6 +11766,13 @@ source: test-driver/tests/speclang.rs
 
 \begin{aligned}
 \mathrm{lift\_baseTypeIR}\left(\mathsf{VARBIT}\,\left\langle\mathsf{w}\right\rangle\right) & = & \mathsf{VARBIT}\,\left\langle\mathsf{w}\right\rangle
+\end{aligned}
+
+\begin{aligned}
+\mathrm{lift\_baseTypeIR}\left(\mathsf{baseTypeIR}\right) & = & \epsilon \quad \text{if}\,\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathrm{debug} \mathsf{baseTypeIR} \\
+{\scriptstyle\mathtt{(2)}} & \mathrm{otherwise}
+\end{array}
 \end{aligned}
 
 
@@ -13681,9 +13686,10 @@ source: test-driver/tests/speclang.rs
 \mathrlap{\displaystyle \begin{array}{rcl}
 \mathrm{lift\_callStatementIR}\left(\mathsf{callableTargetIR}\,\left\langle{\mathsf{typeArgumentIR}}^{\ast}\right\rangle\,\left({\mathsf{argumentIR}}^{\ast}\right)\,\mathbin{\mathtt{;}}\right) & = & \mathsf{lvalue}\,\left\langle\mathsf{typeArgumentList}\right\rangle\,\left(\mathsf{argumentList}\right)\,\mathbin{\mathtt{;}} \\
 \mathrlap{\displaystyle \quad\text{if}\,\begin{array}{r@{\quad}l}
-{\scriptstyle\mathtt{(1)}} & \mathsf{lvalue} = \mathrm{lift\_callableTargetIR\_as\_lvalue}\left(\mathsf{callableTargetIR}\right) \\
-{\scriptstyle\mathtt{(2)}} & \mathsf{typeArgumentList} = \mathrm{lift\_typeArgumentListIR}\left({\mathsf{typeArgumentIR}}^{\ast}\right) \\
-{\scriptstyle\mathtt{(3)}} & \mathsf{argumentList} = \mathrm{lift\_argumentListIR}\left({\mathsf{argumentIR}}^{\ast}\right)
+{\scriptstyle\mathtt{(1)}} & {\mathsf{typeArgumentIR}}^{\ast} \ne \epsilon \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{lvalue} = \mathrm{lift\_callableTargetIR\_as\_lvalue}\left(\mathsf{callableTargetIR}\right) \\
+{\scriptstyle\mathtt{(3)}} & \mathsf{typeArgumentList} = \mathrm{lift\_typeArgumentListIR}\left({\mathsf{typeArgumentIR}}^{\ast}\right) \\
+{\scriptstyle\mathtt{(4)}} & \mathsf{argumentList} = \mathrm{lift\_argumentListIR}\left({\mathsf{argumentIR}}^{\ast}\right)
 \end{array}}\smash{\hphantom{\begin{array}{r}
 \mathrm{lift\_callStatementIR}\left(\mathsf{callableTargetIR}\,\left\langle{\mathsf{typeArgumentIR}}^{\ast}\right\rangle\,\left({\mathsf{argumentIR}}^{\ast}\right)\,\mathbin{\mathtt{;}}\right)
 \end{array}}} &  &
@@ -13692,9 +13698,10 @@ source: test-driver/tests/speclang.rs
 \mathrm{lift\_callStatementIR}\left(\mathsf{callableTargetIR}\,\left\langle{\mathsf{typeArgumentIR}}^{\ast}\right\rangle\,\left({\mathsf{argumentIR}}^{\ast}\right)\,\mathbin{\mathtt{;}}\right) & = & \mathsf{lvalue}\,\left\langle\mathsf{typeArgumentList}\right\rangle\,\left(\mathsf{argumentList}\right)\,\mathbin{\mathtt{;}}
 \end{array} \\
 \quad\text{if}\,\begin{array}{r@{\quad}l}
-{\scriptstyle\mathtt{(1)}} & \mathsf{lvalue} = \mathrm{lift\_callableTargetIR\_as\_lvalue}\left(\mathsf{callableTargetIR}\right) \\
-{\scriptstyle\mathtt{(2)}} & \mathsf{typeArgumentList} = \mathrm{lift\_typeArgumentListIR}\left({\mathsf{typeArgumentIR}}^{\ast}\right) \\
-{\scriptstyle\mathtt{(3)}} & \mathsf{argumentList} = \mathrm{lift\_argumentListIR}\left({\mathsf{argumentIR}}^{\ast}\right)
+{\scriptstyle\mathtt{(1)}} & {\mathsf{typeArgumentIR}}^{\ast} \ne \epsilon \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{lvalue} = \mathrm{lift\_callableTargetIR\_as\_lvalue}\left(\mathsf{callableTargetIR}\right) \\
+{\scriptstyle\mathtt{(3)}} & \mathsf{typeArgumentList} = \mathrm{lift\_typeArgumentListIR}\left({\mathsf{typeArgumentIR}}^{\ast}\right) \\
+{\scriptstyle\mathtt{(4)}} & \mathsf{argumentList} = \mathrm{lift\_argumentListIR}\left({\mathsf{argumentIR}}^{\ast}\right)
 \end{array}
 \end{array}}}
 
@@ -21751,7 +21758,7 @@ source: test-driver/tests/speclang.rs
 {\scriptstyle\mathtt{(6)}} & {\mathsf{ctk}}_{\mathsf{l\_reduced}} = \mathrm{ctk\_of\_typedExpressionIR}\left({\mathsf{typedExpressionIR}}_{\mathsf{l\_reduced}}\right) \\
 {\scriptstyle\mathtt{(7)}} & {\mathsf{typeIR}}_{\mathsf{r\_reduced}} = \mathrm{type\_of\_typedExpressionIR}\left({\mathsf{typedExpressionIR}}_{\mathsf{r\_reduced}}\right) \\
 {\scriptstyle\mathtt{(8)}} & {\mathsf{ctk}}_{\mathsf{r\_reduced}} = \mathrm{ctk\_of\_typedExpressionIR}\left({\mathsf{typedExpressionIR}}_{\mathsf{r\_reduced}}\right) \\
-{\scriptstyle\mathtt{(9)}} & \neg \left({\mathsf{typeIR}}_{\mathsf{r\_reduced}} \mathrel{<:} \mathsf{fixedBitTypeIR}\right) \\
+{\scriptstyle\mathtt{(9)}} & \neg \left(\mathrm{unroll\_typeIR}\left({\mathsf{typeIR}}_{\mathsf{r\_reduced}}\right) \mathrel{<:} \mathsf{fixedBitTypeIR}\right) \\
 {\scriptstyle\mathtt{(10)}} & {\mathsf{ctk}}_{\mathsf{r\_reduced}} = \mathsf{LCTK} \\
 {\scriptstyle\mathtt{(11)}} & \mathsf{p}\,\mathsf{TC} \mathrel{\vdash} {\mathsf{typedExpressionIR}}_{\mathsf{r\_reduced}} \hookrightarrow {\mathsf{integerValue}}_{\mathsf{r}} \\
 {\scriptstyle\mathtt{(12)}} & {\mathsf{i}}_{\mathsf{r}} = \mathrm{int\_of\_integerValue}\left({\mathsf{integerValue}}_{\mathsf{r}}\right) \\

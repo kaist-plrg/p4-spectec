@@ -6716,6 +6716,7 @@ def $partition_parameterListIR(
           nameIR_default*,
           nameIR_optional*)
   -- if _ _ _ nameIR_h _ = parameterIR_h
+  -- if ~(nameIR_h <- nameIR_default*)
   -- if nameIR_h <- nameIR_optional*
 
 def $partition_parameterListIR(
@@ -7542,8 +7543,6 @@ def $lift_baseTypeIR(BOOL) = BOOL
 
 def $lift_baseTypeIR(ERROR) = ERROR
 
-def $lift_baseTypeIR(ERROR) = ERROR
-
 def $lift_baseTypeIR(MATCH_KIND) = MATCH_KIND
 
 def $lift_baseTypeIR(STRING) = STRING
@@ -7555,6 +7554,10 @@ def $lift_baseTypeIR(INT `< w `>) = INT `< w `>
 def $lift_baseTypeIR(BIT `< w `>) = BIT `< w `>
 
 def $lift_baseTypeIR(VARBIT `< w `>) = VARBIT `< w `>
+
+def $lift_baseTypeIR(baseTypeIR) = eps
+  -- debug baseTypeIR
+  -- otherwise
 
 
 
@@ -8548,6 +8551,7 @@ def $lift_callStatementIR(callableTargetIR `< eps `> `( argumentIR* `) ';')
 def $lift_callStatementIR(
     callableTargetIR `< typeArgumentIR* `> `( argumentIR* `) ';')
   = lvalue `< typeArgumentList `> `( argumentList `) ';'
+  -- if typeArgumentIR* =/= eps
   -- if lvalue = $lift_callableTargetIR_as_lvalue(callableTargetIR)
   -- if typeArgumentList = $lift_typeArgumentListIR(typeArgumentIR*)
   -- if argumentList = $lift_argumentListIR(argumentIR*)
@@ -13768,7 +13772,7 @@ rulegroup Expr_ok/binaryExpression-shift {
     -- if typeIR_r_reduced
         = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
-    -- if ~(typeIR_r_reduced <: fixedBitTypeIR)
+    -- if ~($unroll_typeIR(typeIR_r_reduced) <: fixedBitTypeIR)
     -- if ctk_r_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~> integerValue_r
     -- if i_r = $int_of_integerValue(integerValue_r)
