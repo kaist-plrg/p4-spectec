@@ -9470,21 +9470,43 @@ relation Cast_expl_neq: typeIR -> typeIR : castResult
 
   rulegroup newTypeIR
 
-    rule left: TYPE _typeId typeIR_a as typeIR -> typeIR_b : OK typeIR_a :: typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    rule left: newTypeIR_a as typeIR -> typeIR_b : OK typeIR_cast'*{typeIR_cast' <- typeIR_cast'*}
+    -- if (TYPE _typeId typeIR_a = newTypeIR_a)
     -- Cast_impl: typeIR_a -> typeIR_b : OK typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    -- if (typeIR_cast'*{typeIR_cast' <- typeIR_cast'*} = typeIR_a :: typeIR_cast*{typeIR_cast <- typeIR_cast*})
 
-    rule right: typeIR_a -> newTypeIR as typeIR : OK typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [newTypeIR] as typeIR*
-    -- if (TYPE _typeId typeIR_b = newTypeIR)
+    rule both: newTypeIR_a as typeIR -> newTypeIR_b as typeIR : OK typeIR_cast'*{typeIR_cast' <- typeIR_cast'*}
+    -- if (TYPE _typeId typeIR_a = newTypeIR_a)
+    -- if (TYPE _typeId' typeIR_b = newTypeIR_b)
+    -- Cast_impl: typeIR_a -> newTypeIR_b as typeIR : FAIL
+    -- Cast_impl: newTypeIR_a as typeIR -> typeIR_b : OK typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    -- if (typeIR_cast'*{typeIR_cast' <- typeIR_cast'*} = typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [newTypeIR_b] as typeIR*)
+
+    rule right: typeIR_a -> newTypeIR_b as typeIR : OK typeIR_cast'*{typeIR_cast' <- typeIR_cast'*}
+    -- if ~typeIR_a <: newTypeIR
+    -- if (TYPE _typeId typeIR_b = newTypeIR_b)
     -- Cast_impl: typeIR_a -> typeIR_b : OK typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    -- if (typeIR_cast'*{typeIR_cast' <- typeIR_cast'*} = typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [newTypeIR_b] as typeIR*)
 
   rulegroup enumTypeIR-serializable
 
-    rule left: ENUM _typeId `< typeIR_a `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} as typeIR -> typeIR_b : OK typeIR_a :: typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    rule left: serializableEnumTypeIR_a as typeIR -> typeIR_b : OK typeIR_cast'*{typeIR_cast' <- typeIR_cast'*}
+    -- if (ENUM _typeId `< typeIR_a `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = serializableEnumTypeIR_a)
     -- Cast_impl: typeIR_a -> typeIR_b : OK typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    -- if (typeIR_cast'*{typeIR_cast' <- typeIR_cast'*} = typeIR_a :: typeIR_cast*{typeIR_cast <- typeIR_cast*})
 
-    rule right: typeIR_a -> serializableEnumTypeIR as typeIR : OK typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [serializableEnumTypeIR] as typeIR*
-    -- if (ENUM _typeId `< typeIR_b `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = serializableEnumTypeIR)
+    rule both: serializableEnumTypeIR_a as typeIR -> serializableEnumTypeIR_b as typeIR : OK typeIR_cast'*{typeIR_cast' <- typeIR_cast'*}
+    -- if (ENUM _typeId `< typeIR_a `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = serializableEnumTypeIR_a)
+    -- if (ENUM _typeId' `< typeIR_b `> `{ _valueFieldIR'*{_valueFieldIR' <- _valueFieldIR'*} `} = serializableEnumTypeIR_b)
+    -- Cast_impl: typeIR_a -> serializableEnumTypeIR_b as typeIR : FAIL
+    -- Cast_impl: serializableEnumTypeIR_a as typeIR -> typeIR_b : OK typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    -- if (typeIR_cast'*{typeIR_cast' <- typeIR_cast'*} = typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [serializableEnumTypeIR_b] as typeIR*)
+
+    rule right: typeIR_a -> serializableEnumTypeIR_b as typeIR : OK typeIR_cast'*{typeIR_cast' <- typeIR_cast'*}
+    -- if ~typeIR_a <: serializableEnumTypeIR
+    -- if (ENUM _typeId `< typeIR_b `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = serializableEnumTypeIR_b)
     -- Cast_impl: typeIR_a -> typeIR_b : OK typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    -- if (typeIR_cast'*{typeIR_cast' <- typeIR_cast'*} = typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [serializableEnumTypeIR_b] as typeIR*)
 
   rulegroup defaultTypeIR
 

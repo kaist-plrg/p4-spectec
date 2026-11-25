@@ -15608,23 +15608,44 @@ relation Cast_expl_neq: typeIR -> typeIR : castResult
     rulepath left
     -- let typeIR'' = typeIR
     -- if typeIR'' <: newTypeIR
-    -- let TYPE _typeId typeIR_a = typeIR'' as newTypeIR
+    -- let newTypeIR_a = typeIR'' as newTypeIR
     -- let typeIR_b = typeIR'
+    -- let TYPE _typeId typeIR_a = newTypeIR_a
     -- Cast_impl: typeIR_a -> typeIR_b : castResult
     -- if castResult matches OK %
     -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
-    -- output: % -> % : OK typeIR_a :: typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    -- let typeIR_cast'*{typeIR_cast' <- typeIR_cast'*} = typeIR_a :: typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    -- output: % -> % : OK typeIR_cast'*{typeIR_cast' <- typeIR_cast'*}
+
+    rulepath both
+    -- let typeIR'' = typeIR
+    -- if typeIR'' <: newTypeIR
+    -- let newTypeIR_a = typeIR'' as newTypeIR
+    -- let typeIR''' = typeIR'
+    -- if typeIR''' <: newTypeIR
+    -- let newTypeIR_b = typeIR''' as newTypeIR
+    -- let TYPE _typeId typeIR_a = newTypeIR_a
+    -- let TYPE _typeId' typeIR_b = newTypeIR_b
+    -- Cast_impl: typeIR_a -> newTypeIR_b as typeIR : castResult
+    -- if castResult matches FAIL
+    -- Cast_impl: newTypeIR_a as typeIR -> typeIR_b : castResult'
+    -- if castResult' matches OK %
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult'
+    -- let typeIR_cast'*{typeIR_cast' <- typeIR_cast'*} = typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [newTypeIR_b] as typeIR*
+    -- output: % -> % : OK typeIR_cast'*{typeIR_cast' <- typeIR_cast'*}
 
     rulepath right
     -- let typeIR_a = typeIR
     -- let typeIR'' = typeIR'
     -- if typeIR'' <: newTypeIR
-    -- let newTypeIR = typeIR'' as newTypeIR
-    -- let TYPE _typeId typeIR_b = newTypeIR
+    -- let newTypeIR_b = typeIR'' as newTypeIR
+    -- if ~typeIR_a <: newTypeIR
+    -- let TYPE _typeId typeIR_b = newTypeIR_b
     -- Cast_impl: typeIR_a -> typeIR_b : castResult
     -- if castResult matches OK %
     -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
-    -- output: % -> % : OK typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [newTypeIR] as typeIR*
+    -- let typeIR_cast'*{typeIR_cast' <- typeIR_cast'*} = typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [newTypeIR_b] as typeIR*
+    -- output: % -> % : OK typeIR_cast'*{typeIR_cast' <- typeIR_cast'*}
 
   rulegroup enumTypeIR-serializable
 
@@ -15638,23 +15659,44 @@ relation Cast_expl_neq: typeIR -> typeIR : castResult
     rulepath left
     -- let typeIR'' = typeIR
     -- if typeIR'' <: serializableEnumTypeIR
-    -- let ENUM _typeId `< typeIR_a `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = typeIR'' as serializableEnumTypeIR
+    -- let serializableEnumTypeIR_a = typeIR'' as serializableEnumTypeIR
     -- let typeIR_b = typeIR'
+    -- let ENUM _typeId `< typeIR_a `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = serializableEnumTypeIR_a
     -- Cast_impl: typeIR_a -> typeIR_b : castResult
     -- if castResult matches OK %
     -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
-    -- output: % -> % : OK typeIR_a :: typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    -- let typeIR_cast'*{typeIR_cast' <- typeIR_cast'*} = typeIR_a :: typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    -- output: % -> % : OK typeIR_cast'*{typeIR_cast' <- typeIR_cast'*}
+
+    rulepath both
+    -- let typeIR'' = typeIR
+    -- if typeIR'' <: serializableEnumTypeIR
+    -- let serializableEnumTypeIR_a = typeIR'' as serializableEnumTypeIR
+    -- let typeIR''' = typeIR'
+    -- if typeIR''' <: serializableEnumTypeIR
+    -- let serializableEnumTypeIR_b = typeIR''' as serializableEnumTypeIR
+    -- let ENUM _typeId `< typeIR_a `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = serializableEnumTypeIR_a
+    -- let ENUM _typeId' `< typeIR_b `> `{ _valueFieldIR'*{_valueFieldIR' <- _valueFieldIR'*} `} = serializableEnumTypeIR_b
+    -- Cast_impl: typeIR_a -> serializableEnumTypeIR_b as typeIR : castResult
+    -- if castResult matches FAIL
+    -- Cast_impl: serializableEnumTypeIR_a as typeIR -> typeIR_b : castResult'
+    -- if castResult' matches OK %
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult'
+    -- let typeIR_cast'*{typeIR_cast' <- typeIR_cast'*} = typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [serializableEnumTypeIR_b] as typeIR*
+    -- output: % -> % : OK typeIR_cast'*{typeIR_cast' <- typeIR_cast'*}
 
     rulepath right
     -- let typeIR_a = typeIR
     -- let typeIR'' = typeIR'
     -- if typeIR'' <: serializableEnumTypeIR
-    -- let serializableEnumTypeIR = typeIR'' as serializableEnumTypeIR
-    -- let ENUM _typeId `< typeIR_b `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = serializableEnumTypeIR
+    -- let serializableEnumTypeIR_b = typeIR'' as serializableEnumTypeIR
+    -- if ~typeIR_a <: serializableEnumTypeIR
+    -- let ENUM _typeId `< typeIR_b `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = serializableEnumTypeIR_b
     -- Cast_impl: typeIR_a -> typeIR_b : castResult
     -- if castResult matches OK %
     -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
-    -- output: % -> % : OK typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [serializableEnumTypeIR] as typeIR*
+    -- let typeIR_cast'*{typeIR_cast' <- typeIR_cast'*} = typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [serializableEnumTypeIR_b] as typeIR*
+    -- output: % -> % : OK typeIR_cast'*{typeIR_cast' <- typeIR_cast'*}
 
   rulegroup defaultTypeIR
 

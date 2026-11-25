@@ -119,27 +119,50 @@ rulegroup Cast_expl_neq/fixBit {
 rulegroup Cast_expl_neq/newTypeIR {
 
   rule Cast_expl_neq/left:
-    TYPE _ typeIR_a -> typeIR_b : OK (typeIR_a :: typeIR_cast*)
+    newTypeIR_a -> typeIR_b : OK typeIR_cast'*
+    -- if TYPE _ typeIR_a = newTypeIR_a
     -- Cast_impl: typeIR_a -> typeIR_b : OK typeIR_cast*
+    -- if typeIR_cast'* = typeIR_a :: typeIR_cast*
+
+  rule Cast_expl_neq/both:
+    newTypeIR_a -> newTypeIR_b : OK typeIR_cast'*
+    -- if TYPE _ typeIR_a = newTypeIR_a
+    -- if TYPE _ typeIR_b = newTypeIR_b
+    -- Cast_impl: typeIR_a -> newTypeIR_b : FAIL
+    -- Cast_impl: newTypeIR_a -> typeIR_b : OK typeIR_cast*
+    -- if typeIR_cast'* = typeIR_cast* ++ [ newTypeIR_b ]
 
   rule Cast_expl_neq/right:
-    typeIR_a -> newTypeIR : OK (typeIR_cast* ++ [ newTypeIR ])
-    -- if TYPE _ typeIR_b = newTypeIR
+    typeIR_a -> newTypeIR_b : OK typeIR_cast'*
+    -- if ~(typeIR_a <: newTypeIR)
+    -- if TYPE _ typeIR_b = newTypeIR_b
     -- Cast_impl: typeIR_a -> typeIR_b : OK typeIR_cast*
+    -- if typeIR_cast'* = typeIR_cast* ++ [ newTypeIR_b ]
 
 }
 
 rulegroup Cast_expl_neq/enumTypeIR-serializable {
 
   rule Cast_expl_neq/left:
-    ENUM _ `< typeIR_a `> `{ _ `} -> typeIR_b : OK (typeIR_a :: typeIR_cast*)
+    serializableEnumTypeIR_a -> typeIR_b : OK typeIR_cast'*
+    -- if ENUM _ `< typeIR_a `> `{ _ `} = serializableEnumTypeIR_a
     -- Cast_impl: typeIR_a -> typeIR_b : OK typeIR_cast*
+    -- if typeIR_cast'* = typeIR_a :: typeIR_cast*
+
+  rule Cast_expl_neq/both:
+    serializableEnumTypeIR_a -> serializableEnumTypeIR_b : OK typeIR_cast'*
+    -- if ENUM _ `< typeIR_a `> `{ _ `} = serializableEnumTypeIR_a
+    -- if ENUM _ `< typeIR_b `> `{ _ `} = serializableEnumTypeIR_b
+    -- Cast_impl: typeIR_a -> serializableEnumTypeIR_b : FAIL
+    -- Cast_impl: serializableEnumTypeIR_a -> typeIR_b : OK typeIR_cast*
+    -- if typeIR_cast'* = typeIR_cast* ++ [ serializableEnumTypeIR_b ]
 
   rule Cast_expl_neq/right:
-    typeIR_a -> serializableEnumTypeIR
-      : OK (typeIR_cast* ++ [ serializableEnumTypeIR ])
-    -- if ENUM _ `< typeIR_b `> `{ _ `} = serializableEnumTypeIR
+    typeIR_a -> serializableEnumTypeIR_b : OK typeIR_cast'*
+    -- if ~(typeIR_a <: serializableEnumTypeIR)
+    -- if ENUM _ `< typeIR_b `> `{ _ `} = serializableEnumTypeIR_b
     -- Cast_impl: typeIR_a -> typeIR_b : OK typeIR_cast*
+    -- if typeIR_cast'* = typeIR_cast* ++ [ serializableEnumTypeIR_b ]
 
 }
 

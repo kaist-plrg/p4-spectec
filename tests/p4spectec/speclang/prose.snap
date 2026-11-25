@@ -20327,25 +20327,57 @@ Arm 2:
 
     Arm 1:
 
-      1. If let (TYPE _typeId typeIR_a) of type newTypeIR be typeIR, then
+      1. If let newTypeIR_a of type newTypeIR be typeIR, then
 
-        1. (Cast_impl: typeIR_a -> typeIR' : castResult) [→ next]
+        1. Block (2 arms)
 
-        2. If let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult matching pattern OK %, then
+        Arm 1:
 
-          1. Result in: % -> % : (OK typeIR_a :: (typeIR_cast)*{typeIR_cast <- typeIR_cast*})
+          1. (Let (TYPE _typeId typeIR_a) be newTypeIR_a)
+
+          2. (Cast_impl: typeIR_a -> typeIR' : castResult) [→ next]
+
+          3. If let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult matching pattern OK %, then
+
+            1. (Let (typeIR_cast')*{typeIR_cast' <- typeIR_cast'*} be typeIR_a :: (typeIR_cast)*{typeIR_cast <- typeIR_cast*})
+
+            2. Result in: % -> % : (OK (typeIR_cast')*{typeIR_cast' <- typeIR_cast'*})
+
+        Arm 2:
+
+          1. If let newTypeIR_b of type newTypeIR be typeIR', then
+
+            1. (Let (TYPE _typeId typeIR_a) be newTypeIR_a)
+
+            2. (Let (TYPE _typeId' typeIR_b) be newTypeIR_b)
+
+            3. (Cast_impl: typeIR_a -> (newTypeIR_b as typeIR) : castResult) [→ next]
+
+            4. If ((castResult matches pattern FAIL)), then
+
+              1. (Cast_impl: (newTypeIR_a as typeIR) -> typeIR_b : castResult') [→ next]
+
+              2. If let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult' matching pattern OK %, then
+
+                1. (Let (typeIR_cast')*{typeIR_cast' <- typeIR_cast'*} be (typeIR_cast)*{typeIR_cast <- typeIR_cast*} ++ ([newTypeIR_b] as typeIR*))
+
+                2. Result in: % -> % : (OK (typeIR_cast')*{typeIR_cast' <- typeIR_cast'*})
 
     Arm 2:
 
-      1. If let newTypeIR of type newTypeIR be typeIR', then
+      1. If let newTypeIR_b of type newTypeIR be typeIR', then
 
-        1. (Let (TYPE _typeId typeIR_b) be newTypeIR)
+        1. If (~(typeIR has type newTypeIR)), then
 
-        2. (Cast_impl: typeIR -> typeIR_b : castResult) [→ group enumTypeIR-serializable]
+          1. (Let (TYPE _typeId typeIR_b) be newTypeIR_b)
 
-        3. If let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult matching pattern OK %, then
+          2. (Cast_impl: typeIR -> typeIR_b : castResult) [→ group enumTypeIR-serializable]
 
-          1. Result in: % -> % : (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*} ++ ([newTypeIR] as typeIR*))
+          3. If let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult matching pattern OK %, then
+
+            1. (Let (typeIR_cast')*{typeIR_cast' <- typeIR_cast'*} be (typeIR_cast)*{typeIR_cast <- typeIR_cast*} ++ ([newTypeIR_b] as typeIR*))
+
+            2. Result in: % -> % : (OK (typeIR_cast')*{typeIR_cast' <- typeIR_cast'*})
 
 Arm 3:
 
@@ -20355,25 +20387,57 @@ Arm 3:
 
     Arm 1:
 
-      1. If let (ENUM _typeId `< typeIR_a `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) of type serializableEnumTypeIR be typeIR, then
+      1. If let serializableEnumTypeIR_a of type serializableEnumTypeIR be typeIR, then
 
-        1. (Cast_impl: typeIR_a -> typeIR' : castResult) [→ next]
+        1. Block (2 arms)
 
-        2. If let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult matching pattern OK %, then
+        Arm 1:
 
-          1. Result in: % -> % : (OK typeIR_a :: (typeIR_cast)*{typeIR_cast <- typeIR_cast*})
+          1. (Let (ENUM _typeId `< typeIR_a `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) be serializableEnumTypeIR_a)
+
+          2. (Cast_impl: typeIR_a -> typeIR' : castResult) [→ next]
+
+          3. If let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult matching pattern OK %, then
+
+            1. (Let (typeIR_cast')*{typeIR_cast' <- typeIR_cast'*} be typeIR_a :: (typeIR_cast)*{typeIR_cast <- typeIR_cast*})
+
+            2. Result in: % -> % : (OK (typeIR_cast')*{typeIR_cast' <- typeIR_cast'*})
+
+        Arm 2:
+
+          1. If let serializableEnumTypeIR_b of type serializableEnumTypeIR be typeIR', then
+
+            1. (Let (ENUM _typeId `< typeIR_a `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) be serializableEnumTypeIR_a)
+
+            2. (Let (ENUM _typeId' `< typeIR_b `> `{ (_valueFieldIR')*{_valueFieldIR' <- _valueFieldIR'*} `}) be serializableEnumTypeIR_b)
+
+            3. (Cast_impl: typeIR_a -> (serializableEnumTypeIR_b as typeIR) : castResult) [→ next]
+
+            4. If ((castResult matches pattern FAIL)), then
+
+              1. (Cast_impl: (serializableEnumTypeIR_a as typeIR) -> typeIR_b : castResult') [→ next]
+
+              2. If let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult' matching pattern OK %, then
+
+                1. (Let (typeIR_cast')*{typeIR_cast' <- typeIR_cast'*} be (typeIR_cast)*{typeIR_cast <- typeIR_cast*} ++ ([serializableEnumTypeIR_b] as typeIR*))
+
+                2. Result in: % -> % : (OK (typeIR_cast')*{typeIR_cast' <- typeIR_cast'*})
 
     Arm 2:
 
-      1. If let serializableEnumTypeIR of type serializableEnumTypeIR be typeIR', then
+      1. If let serializableEnumTypeIR_b of type serializableEnumTypeIR be typeIR', then
 
-        1. (Let (ENUM _typeId `< typeIR_b `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) be serializableEnumTypeIR)
+        1. If (~(typeIR has type serializableEnumTypeIR)), then
 
-        2. (Cast_impl: typeIR -> typeIR_b : castResult) [→ group defaultTypeIR]
+          1. (Let (ENUM _typeId `< typeIR_b `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) be serializableEnumTypeIR_b)
 
-        3. If let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult matching pattern OK %, then
+          2. (Cast_impl: typeIR -> typeIR_b : castResult) [→ group defaultTypeIR]
 
-          1. Result in: % -> % : (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*} ++ ([serializableEnumTypeIR] as typeIR*))
+          3. If let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult matching pattern OK %, then
+
+            1. (Let (typeIR_cast')*{typeIR_cast' <- typeIR_cast'*} be (typeIR_cast)*{typeIR_cast <- typeIR_cast*} ++ ([serializableEnumTypeIR_b] as typeIR*))
+
+            2. Result in: % -> % : (OK (typeIR_cast')*{typeIR_cast' <- typeIR_cast'*})
 
 Arm 4:
 

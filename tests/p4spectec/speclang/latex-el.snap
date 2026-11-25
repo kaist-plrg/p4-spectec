@@ -20297,28 +20297,60 @@ source: test-driver/tests/speclang.rs
 \begin{gathered}
 \begin{array}{l}
 {\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Cast\_expl\_neq-left}}} \\
-{\displaystyle \frac{{\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast}}{\mathsf{TYPE}\,\mathsf{\_}\,{\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,\left({\mathsf{typeIR}}_{\mathsf{a}} \mathbin{::} {{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast}\right)}}
+{\displaystyle \frac{\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathsf{TYPE}\,\mathsf{\_}\,{\mathsf{typeIR}}_{\mathsf{a}} = {\mathsf{newTypeIR}}_{\mathsf{a}} \\
+{\scriptstyle\mathtt{(2)}} & {\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast} \\
+{\scriptstyle\mathtt{(3)}} & {{\mathsf{typeIR}}_{\mathsf{cast'}}}^{\ast} = {\mathsf{typeIR}}_{\mathsf{a}} \mathbin{::} {{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast}
+\end{array}}{{\mathsf{newTypeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast'}}}^{\ast}}}
+\end{array} \\[1ex]
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Cast\_expl\_neq-both}}} \\
+{\displaystyle \frac{\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathsf{TYPE}\,\mathsf{\_}\,{\mathsf{typeIR}}_{\mathsf{a}} = {\mathsf{newTypeIR}}_{\mathsf{a}} \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{TYPE}\,\mathsf{\_}\,{\mathsf{typeIR}}_{\mathsf{b}} = {\mathsf{newTypeIR}}_{\mathsf{b}} \\
+{\scriptstyle\mathtt{(3)}} & {\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{newTypeIR}}_{\mathsf{b}} : \mathsf{FAIL} \\
+{\scriptstyle\mathtt{(4)}} & {\mathsf{newTypeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast} \\
+{\scriptstyle\mathtt{(5)}} & {{\mathsf{typeIR}}_{\mathsf{cast'}}}^{\ast} = {{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast} \mathbin{+\!\!+} \left[{\mathsf{newTypeIR}}_{\mathsf{b}}\right]
+\end{array}}{{\mathsf{newTypeIR}}_{\mathsf{a}} \to {\mathsf{newTypeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast'}}}^{\ast}}}
 \end{array} \\[1ex]
 \begin{array}{l}
 {\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Cast\_expl\_neq-right}}} \\
 {\displaystyle \frac{\begin{array}{r@{\quad}l}
-{\scriptstyle\mathtt{(1)}} & \mathsf{TYPE}\,\mathsf{\_}\,{\mathsf{typeIR}}_{\mathsf{b}} = \mathsf{newTypeIR} \\
-{\scriptstyle\mathtt{(2)}} & {\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast}
-\end{array}}{{\mathsf{typeIR}}_{\mathsf{a}} \to \mathsf{newTypeIR} : \mathsf{OK}\,\left({{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast} \mathbin{+\!\!+} \left[\mathsf{newTypeIR}\right]\right)}}
+{\scriptstyle\mathtt{(1)}} & \neg \left({\mathsf{typeIR}}_{\mathsf{a}} \mathrel{<:} \mathsf{newTypeIR}\right) \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{TYPE}\,\mathsf{\_}\,{\mathsf{typeIR}}_{\mathsf{b}} = {\mathsf{newTypeIR}}_{\mathsf{b}} \\
+{\scriptstyle\mathtt{(3)}} & {\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast} \\
+{\scriptstyle\mathtt{(4)}} & {{\mathsf{typeIR}}_{\mathsf{cast'}}}^{\ast} = {{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast} \mathbin{+\!\!+} \left[{\mathsf{newTypeIR}}_{\mathsf{b}}\right]
+\end{array}}{{\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{newTypeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast'}}}^{\ast}}}
 \end{array}
 \end{gathered}
 
 \begin{gathered}
 \begin{array}{l}
 {\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Cast\_expl\_neq-left}}} \\
-{\displaystyle \frac{{\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast}}{\mathsf{ENUM}\,\mathsf{\_}\,\left\langle{\mathsf{typeIR}}_{\mathsf{a}}\right\rangle\,\left\{\mathsf{\_}\right\} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,\left({\mathsf{typeIR}}_{\mathsf{a}} \mathbin{::} {{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast}\right)}}
+{\displaystyle \frac{\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathsf{ENUM}\,\mathsf{\_}\,\left\langle{\mathsf{typeIR}}_{\mathsf{a}}\right\rangle\,\left\{\mathsf{\_}\right\} = {\mathsf{serializableEnumTypeIR}}_{\mathsf{a}} \\
+{\scriptstyle\mathtt{(2)}} & {\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast} \\
+{\scriptstyle\mathtt{(3)}} & {{\mathsf{typeIR}}_{\mathsf{cast'}}}^{\ast} = {\mathsf{typeIR}}_{\mathsf{a}} \mathbin{::} {{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast}
+\end{array}}{{\mathsf{serializableEnumTypeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast'}}}^{\ast}}}
+\end{array} \\[1ex]
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Cast\_expl\_neq-both}}} \\
+{\displaystyle \frac{\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathsf{ENUM}\,\mathsf{\_}\,\left\langle{\mathsf{typeIR}}_{\mathsf{a}}\right\rangle\,\left\{\mathsf{\_}\right\} = {\mathsf{serializableEnumTypeIR}}_{\mathsf{a}} \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{ENUM}\,\mathsf{\_}\,\left\langle{\mathsf{typeIR}}_{\mathsf{b}}\right\rangle\,\left\{\mathsf{\_}\right\} = {\mathsf{serializableEnumTypeIR}}_{\mathsf{b}} \\
+{\scriptstyle\mathtt{(3)}} & {\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{serializableEnumTypeIR}}_{\mathsf{b}} : \mathsf{FAIL} \\
+{\scriptstyle\mathtt{(4)}} & {\mathsf{serializableEnumTypeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast} \\
+{\scriptstyle\mathtt{(5)}} & {{\mathsf{typeIR}}_{\mathsf{cast'}}}^{\ast} = {{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast} \mathbin{+\!\!+} \left[{\mathsf{serializableEnumTypeIR}}_{\mathsf{b}}\right]
+\end{array}}{{\mathsf{serializableEnumTypeIR}}_{\mathsf{a}} \to {\mathsf{serializableEnumTypeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast'}}}^{\ast}}}
 \end{array} \\[1ex]
 \begin{array}{l}
 {\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Cast\_expl\_neq-right}}} \\
 {\displaystyle \frac{\begin{array}{r@{\quad}l}
-{\scriptstyle\mathtt{(1)}} & \mathsf{ENUM}\,\mathsf{\_}\,\left\langle{\mathsf{typeIR}}_{\mathsf{b}}\right\rangle\,\left\{\mathsf{\_}\right\} = \mathsf{serializableEnumTypeIR} \\
-{\scriptstyle\mathtt{(2)}} & {\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast}
-\end{array}}{{\mathsf{typeIR}}_{\mathsf{a}} \to \mathsf{serializableEnumTypeIR} : \mathsf{OK}\,\left({{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast} \mathbin{+\!\!+} \left[\mathsf{serializableEnumTypeIR}\right]\right)}}
+{\scriptstyle\mathtt{(1)}} & \neg \left({\mathsf{typeIR}}_{\mathsf{a}} \mathrel{<:} \mathsf{serializableEnumTypeIR}\right) \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{ENUM}\,\mathsf{\_}\,\left\langle{\mathsf{typeIR}}_{\mathsf{b}}\right\rangle\,\left\{\mathsf{\_}\right\} = {\mathsf{serializableEnumTypeIR}}_{\mathsf{b}} \\
+{\scriptstyle\mathtt{(3)}} & {\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast} \\
+{\scriptstyle\mathtt{(4)}} & {{\mathsf{typeIR}}_{\mathsf{cast'}}}^{\ast} = {{\mathsf{typeIR}}_{\mathsf{cast}}}^{\ast} \mathbin{+\!\!+} \left[{\mathsf{serializableEnumTypeIR}}_{\mathsf{b}}\right]
+\end{array}}{{\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{serializableEnumTypeIR}}_{\mathsf{b}} : \mathsf{OK}\,{{\mathsf{typeIR}}_{\mathsf{cast'}}}^{\ast}}}
 \end{array}
 \end{gathered}
 
