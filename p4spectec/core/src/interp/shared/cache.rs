@@ -17,23 +17,26 @@ use smallvec::SmallVec;
 use crate::lang::data::{
     arena::Arena,
     intern::CanonId,
+    typ::Typ,
     value::flat::{Value, ValueKind},
 };
 
 // = Call identity
 
-/// A call identified by its name and canonical argument values.
+/// A call identified by its name, type arguments, and canonical argument values.
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub(crate) struct CallKey {
     name: Rc<str>,
+    targs: Vec<Typ>,
     values: SmallVec<[CanonId<ValueKind>; 4]>,
 }
 
 impl CallKey {
-    /// Builds the key; type arguments and annotations never distinguish calls.
-    pub(crate) fn new(arena: &Arena, name: &Rc<str>, values: &[Value]) -> Self {
+    /// Builds a key with the resolved type arguments.
+    pub(crate) fn new(arena: &Arena, name: &Rc<str>, targs: &[Typ], values: &[Value]) -> Self {
         Self {
             name: Rc::clone(name),
+            targs: targs.to_vec(),
             values: values
                 .iter()
                 .map(|value| arena.value.canon_id(value.node))
@@ -46,6 +49,7 @@ impl CallKey {
 struct CallQuery<'a> {
     arena: &'a Arena,
     name: &'a str,
+    targs: &'a [Typ],
     values: &'a [Value],
 }
 
@@ -53,6 +57,7 @@ impl Hash for CallQuery<'_> {
     fn hash<H: Hasher>(&self, hasher: &mut H) {
         // Match CallKey's derived hash, including the argument slice length
         self.name.hash(hasher);
+        self.targs.hash(hasher);
         self.values.len().hash(hasher);
         for value in self.values {
             self.arena.value.canon_id(value.node).hash(hasher);
@@ -63,6 +68,7 @@ impl Hash for CallQuery<'_> {
 impl Equivalent<CallKey> for CallQuery<'_> {
     fn equivalent(&self, key: &CallKey) -> bool {
         self.name == key.name.as_ref()
+            && self.targs == key.targs
             && self.values.len() == key.values.len()
             && self
                 .values
@@ -85,8 +91,14 @@ pub struct Cache {
 
 impl Cache {
     /// Looks up a function without allocating an owned call key.
-    pub(crate) fn find_func(&self, arena: &Arena, name: &str, values: &[Value]) -> Option<&Value> {
-        self.funcs.get(&CallQuery { arena, name, values })
+    pub(crate) fn find_func(
+        &self,
+        arena: &Arena,
+        name: &str,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Option<&Value> {
+        self.funcs.get(&CallQuery { arena, name, targs, values })
     }
 
     /// Looks up a relation without allocating an owned call key.
@@ -96,7 +108,8 @@ impl Cache {
         name: &str,
         values: &[Value],
     ) -> Option<&Vec<Value>> {
-        self.rels.get(&CallQuery { arena, name, values })
+        self.rels
+            .get(&CallQuery { arena, name, targs: &[], values })
     }
 
     // - Lifecycle

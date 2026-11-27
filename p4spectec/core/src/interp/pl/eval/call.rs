@@ -226,7 +226,7 @@ pub(crate) fn invoke_rel<Iface: Interface, Ext: Extern>(
             return ok!(values);
         }
         if cache {
-            keys_cache.push(CallKey::new(runner_ctx.arena(), &id.node, &values));
+            keys_cache.push(CallKey::new(runner_ctx.arena(), &id.node, &[], &values));
         }
         // Track effects for memoization; grow the stack for deep recursion
         let checkpoint = runner_ctx.effect_checkpoint();
@@ -378,7 +378,7 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
                 runner_ctx
                     .interp()
                     .cache
-                    .find_func(runner_ctx.arena(), &id_def.node, &values)
+                    .find_func(runner_ctx.arena(), &id_def.node, &targs, &values)
         {
             let value = *value;
             // Cached results also complete the pure callers in this chain
@@ -388,7 +388,7 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
             return ok!(value);
         }
         if cache {
-            keys_cache.push(CallKey::new(runner_ctx.arena(), &id_def.node, &values));
+            keys_cache.push(CallKey::new(runner_ctx.arena(), &id_def.node, &targs, &values));
         }
         // Track effects for memoization; grow the stack for deep recursion
         let checkpoint = runner_ctx.effect_checkpoint();
