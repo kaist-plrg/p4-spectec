@@ -2,9 +2,9 @@ name: Specification generation
 
 on:
   pull_request:
-    branches: [rust-port, main]
+    branches: [main]
   push:
-    branches: [rust-port, main]
+    branches: [main]
     tags: ['v*']
   workflow_dispatch:
 
@@ -21,14 +21,14 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Select the pinned Rust toolchain
         working-directory: p4spectec
         run: rustup show
 
       - name: Cache Rust dependencies and build output
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -42,12 +42,47 @@ jobs:
           sudo apt-get install -y build-essential ruby-dev python3
           sudo gem install asciidoctor asciidoctor-pdf rouge --no-document
 
-      - name: Build API documentation
-        run: make rustdoc
-
       - name: Render P4 HTML specifications
         run: make p4spec-draft-html p4spec-release-html
 
+      - name: Summarize missing prose and splice diagnostics
+        run: |
+          {
+            echo '```'
+            head -n 1 docs/p4/text.missing
+            grep -oE '^[a-z]+\[[a-z/-]+\]' docs/p4/splice.missing | sort | uniq -c || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Render P4 release PDF
-        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+        if: github.event_name != 'pull_request'
         run: make p4spec-release
+
+      - name: Stage the GitHub Pages site
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p _site/p4
+          cp docs/p4/P4-16-spec-release.html docs/p4/P4-16-spec-release.pdf _site/p4/
+          # Pages serves unknown extensions as downloads; .txt opens in the browser
+          cp docs/p4/splice.missing _site/p4/splice-missing.txt
+          cp docs/p4/text.missing _site/p4/text-missing.txt
+
+      - name: Upload the GitHub Pages site
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy-pages:
+    needs: generate-specification
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5

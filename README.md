@@ -158,10 +158,12 @@ make p4spec-draft-html
 make p4spec-draft
 ```
 
-The generated files are in `docs/p4/`.
+The generated files are in `docs/p4/` and are not committed.
 These targets build the release executable and splice the specifications into
-AsciiDoc skeletons before rendering. Missing prose and references are reported
-in `docs/p4/splice.missing`.
+AsciiDoc skeletons before rendering. Splice diagnostics are reported in
+`docs/p4/splice.missing` and prose not yet ported in `docs/p4/text.missing`.
+CI renders the release document on every push to `main` and publishes it, with
+both reports, to GitHub Pages under `p4/`.
 
 To splice another skeleton, use the Rust CLI's long options:
 
